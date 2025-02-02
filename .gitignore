@@ -1,0 +1,11 @@
+.pytest_cache
+.venv
+.env
+__pycache__
+*.db
+*.jpg
+*.jpeg
+*.png
+dumps
+notes.md
+media
