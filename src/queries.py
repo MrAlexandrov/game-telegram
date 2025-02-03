@@ -19,6 +19,7 @@ from models import (
 )
 from uuid import uuid4
 from logger import get_logger
+import inspect
 
 logger = get_logger(__name__)
 
@@ -69,7 +70,7 @@ class DatabaseConnector:
             telegram_id=telegram_id,
             telegram_name=telegram_name,
             nickname=nickname,
-            game_id=game_id
+            game_id=game_id,
         )
         self.session.add(new_player)
         self.session.commit()
@@ -100,7 +101,7 @@ class DatabaseConnector:
         """
         result = self.session.query(Result).filter(
             Result.user_id == player_id,
-            Result.game_id == game_id
+            Result.game_id == game_id,
         ).first()
         if result:
             result.score = score
@@ -109,7 +110,7 @@ class DatabaseConnector:
                 id=str(uuid4()),
                 user_id=player_id,
                 game_id=game_id,
-                score=score
+                score=score,
             )
             self.session.add(result)
         self.session.commit()
@@ -121,7 +122,7 @@ class DatabaseConnector:
         """
         result = self.session.query(Result).filter(
             Result.user_id == player_id,
-            Result.game_id == game_id
+            Result.game_id == game_id,
         ).first()
         if result:
             result.score += increment
@@ -131,7 +132,7 @@ class DatabaseConnector:
                 id=str(uuid4()),
                 user_id=player_id,
                 game_id=game_id,
-                score=increment
+                score=increment,
             )
             self.session.add(result)
         self.session.commit()
@@ -147,14 +148,14 @@ class DatabaseConnector:
     # ---------------------------
     # Работа с вопросами (Question)
     # ---------------------------
-    def create_question(self, game_id: str, question_text: str, has_media: bool = False) -> Question:
+    def create_question(self, game_id: str, question_text: str, path_to_media: str | None = None) -> Question:
         """
         Создает новый вопрос для игры.
         """
         new_question = Question(
             game_id=game_id,
             question_text=question_text,
-            has_media=has_media
+            path_to_media=path_to_media,
         )
         self.session.add(new_question)
         self.session.commit()
@@ -166,11 +167,19 @@ class DatabaseConnector:
         """
         return self.session.query(Question).filter(Question.id == question_id).first()
 
-    def get_questions_by_game(self, game_id: str):
+    def get_questions_by_game(self, game_id: str) -> list[Question]:
         """
         Возвращает все вопросы для заданной игры.
         """
         return self.session.query(Question).filter(Question.game_id == game_id).all()
+
+    def update_question_text(self, question_id: str, new_text: str) -> Question:
+        question = self.session.query(Question).filter(Question.id == question_id).first()
+        if question is None:
+            raise ValueError(f"Question with id {question_id} not found.")
+        question.question_text = new_text
+        self.session.commit()
+        return question
 
     # ---------------------------
     # Работа с вариантами (Variant)
@@ -191,6 +200,9 @@ class DatabaseConnector:
     def get_variant(self, variant_id: str) -> Variants:
         return self.session.query(Variants).filter(Variants.id == variant_id).first()
 
+    def get_correct_variants_by_question_id(self, question_id: str) -> list[Variants]:
+        return self.session.query(Variants).filter(Variants.question_id == question_id).filter(Variants.is_correct == True).all()
+
     def update_variant_correctness(self, variant_id: str, is_correct: bool) -> Variants:
         variant = self.get_variant(variant_id)
         if variant is None:
@@ -199,7 +211,7 @@ class DatabaseConnector:
         self.session.commit()
         return variant
 
-    def get_variants_by_question(self, question_id: str):
+    def get_variants_by_question(self, question_id: str) -> list[Variants]:
         """
         Возвращает все ответы для заданного вопроса.
         """
@@ -218,7 +230,7 @@ class DatabaseConnector:
             user_id=player_id,
             answer_text=answer_text,
             is_correct=is_correct,
-            answered_at=answered_at
+            answered_at=answered_at,
         )
         self.session.add(new_answer)
         self.session.commit()
@@ -242,7 +254,7 @@ class DatabaseConnector:
             media_type=media_type,
             url=url,
             description=description,
-            display_type=display_type
+            display_type=display_type,
         )
         self.session.add(new_media)
         self.session.commit()
@@ -265,7 +277,7 @@ class DatabaseConnector:
             game_id=game_id,
             game_code=game_code,
             status=status,
-            current_question_id=current_question_id
+            current_question_id=current_question_id,
         )
         self.session.add(new_session)
         self.session.commit()
@@ -287,11 +299,17 @@ class DatabaseConnector:
         new_game = Game(
             type=game_type,
             title=title,
-            created_by=created_by
+            created_by=created_by,
         )
         self.session.add(new_game)
         self.session.commit()
         return new_game
+
+    def get_games_by_creator_id(self, admin_id: str) -> list[Game]:
+        """
+        Получает игр, созданных данным пользователем
+        """
+        return self.session.query(Game).filter(Game.created_by == admin_id).all()
 
     def get_game(self, game_id: str) -> Game:
         """
@@ -304,11 +322,14 @@ class DatabaseConnector:
         new_user = InternalUser(
             telegram_id=telegram_id,
             nickname=nickname,
-            hashed_password=hashed_password
+            hashed_password=hashed_password,
         )
         self.session.add(new_user)
         self.session.commit()
         return new_user
+
+    def get_internal_user_by_id(self, id: str) -> InternalUser:
+        return self.session.query(InternalUser).filter(InternalUser.id == id).first()
 
     def get_internal_user_by_telegram_id(self, telegram_id: int) -> InternalUser:
         return self.session.query(InternalUser).filter(InternalUser.telegram_id == telegram_id).first()
@@ -317,6 +338,7 @@ class DatabaseConnector:
         """
         Обновляет состояние внутреннего пользователя (администратора).
         """
+        logger.debug(f"admin {telegram_id} change state to {new_state}")
         user = self.get_internal_user_by_telegram_id(telegram_id)
         if user:
             user.state = new_state

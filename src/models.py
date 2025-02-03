@@ -90,7 +90,7 @@ class Question(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     game_id = Column(String, ForeignKey('games.id'), nullable=True)
     question_text = Column(Text, nullable=True)
-    has_media = Column(Boolean, default=False)
+    path_to_media = Column(String, default=None)
 
     # Отношения
     game = relationship("Game", back_populates="questions")

@@ -28,7 +28,7 @@ def get_logger(name: str = None) -> logging.Logger:
     if not logger.handlers:
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s')
         console_handler.setFormatter(formatter)
         console_handler.addFilter(SensitiveDataFilter(BOT_TOKEN))
         logger.addHandler(console_handler)
