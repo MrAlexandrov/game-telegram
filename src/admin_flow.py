@@ -33,9 +33,9 @@ class AdminFlow:
         self.not_selected_variants = {}
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await self.game_options(update, context)
+        await self.admin_options(update, context)
 
-    async def game_options(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def admin_options(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         Запускает админский режим.
         Обновляет состояние администратора до "GAME_OPTIONS" и выводит главное меню.
@@ -51,18 +51,7 @@ class AdminFlow:
         admin_id = update.effective_user.id
         logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
         self.connector.update_internal_user_state(admin_id, f"{ADMIN}:{GAME_OPTIONS}")
-        keyboard = [
-            [InlineKeyboardButton("Создать новую игру",     callback_data=f"{ADMIN}:{CREATE_GAME}")],
-            [InlineKeyboardButton("Редактировать игру",     callback_data=f"{ADMIN}:{GAME_TO_EDIT}")],
-            [InlineKeyboardButton("Удалить игру",           callback_data=f"{ADMIN}:{DELETE_GAME}")],
-            [InlineKeyboardButton("Другие команды",         callback_data=f"{ADMIN}:{START_GAME}")],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(
-            chat_id=admin_id,
-            text="Добро пожаловать, администратор!\nВыберите действие:",
-            reply_markup=reply_markup,
-        )
+        await self.admin_options(update, context)
         logger.info(f"Админ {admin_id} запущен в режиме '{GAME_OPTIONS}'.")
 
     # TODO: separate this handler, to make it more readable
@@ -102,7 +91,7 @@ class AdminFlow:
         await query.edit_message_reply_markup(reply_markup=None)
         # TODO: add state checking for all callback
         if command == f"{GAME_OPTIONS}":
-            await self.game_options(update, context)
+            await self.admin_options(update, context)
         elif command.startswith(f"{DONE}:"):
             # TODO: rewrite this
             # state = {ADMIN}:{VARIANT_OPTIONS}:
@@ -149,7 +138,7 @@ class AdminFlow:
             self.connector.update_internal_user_state(admin_id, f"{ADMIN}:{QUESTION_OPTIONS}:{question_id}")
             game_id = self.connector.get_question(question_id).game_id
             await self.question_options(update, context, question_id)
-        elif command.startswith("delete_question:"):
+        elif command.startswith(f"{DELETE_QUESTION}:"):
             question_id = command.split(":")[-1]
             await self.delete_question_by_question_id(update, context, question_id)
         elif command.startswith(f"{EDIT_QUESTION_TEXT}:"):
@@ -160,7 +149,7 @@ class AdminFlow:
             self.connector.update_internal_user_state(admin_id, new_state)
             await context.bot.send_message(
                 chat_id=admin_id,
-                text="Введите текст вопроса (from command.startswith(\"{EDIT_QUESTION_TEXT}:\"))",
+                text=f"Введите текст вопроса (from command.startswith(\"{EDIT_QUESTION_TEXT}:\"))",
             )
         elif command.startswith(f"{VARIANT_OPTIONS}:"):
             question_id = command.split(":")[-1]
@@ -222,8 +211,8 @@ class AdminFlow:
         ]
         # Разбиваем кнопки на строки по 2 кнопки
         keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
-        # Добавляем строку с кнопкой "Готово"
-        keyboard.append([InlineKeyboardButton("Готово", callback_data=f"{ADMIN}:{DONE}:{question_id}")])
+        # Добавляем строку с кнопкой DONE_LABEL
+        keyboard.append([InlineKeyboardButton(DONE_LABEL, callback_data=f"{ADMIN}:{DONE}:{question_id}")])
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_reply_markup(reply_markup=reply_markup)
 
@@ -262,18 +251,7 @@ class AdminFlow:
             logger.info(f"Game {game_id} created. State updated to {new_state}.")
 
             await update.message.reply_text(f"Игра '{text}' создана.")
-            keyboard = [
-                [InlineKeyboardButton("Добавить вопрос",            callback_data=f"{ADMIN}:{ADD_QUESTION}:{game_id}")],
-                [InlineKeyboardButton("Редактировать вопрос",       callback_data=f"{ADMIN}:{QUESTION_TO_EDIT}:{game_id}")],
-                [InlineKeyboardButton("Удалить вопрос",             callback_data=f"{ADMIN}:{QUESTION_TO_DELETE}:{game_id}")],
-                [InlineKeyboardButton("Отмена",                     callback_data=f"{ADMIN}:{GAME_OPTIONS}")]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await context.bot.send_message(
-                chat_id=admin_id,
-                text=f"Что вы хотите сделать с игрой? (from current_state == \"{ADMIN}:{CREATE_GAME}\")",
-                reply_markup=reply_markup,
-            )
+            await self.game_options(update, context, game_id)
         elif current_state.startswith(f"{ADMIN}:{ADD_QUESTION}:"):
             game_id = current_state.split(":")[-1]
             question = self.connector.create_question(game_id, text)
@@ -302,28 +280,28 @@ class AdminFlow:
             new_state = f"{ADMIN}:{VARIANT_OPTIONS}:{question_id}"
             self.connector.update_internal_user_state(admin_id, new_state)
             await self.variant_options(update, context, question_id)
-        elif current_state.endswith(":variants"):
-            # Состояние для ввода вариантов ответа
-            # Создаем вариант ответа; здесь можно расширить логику, чтобы разрешить ввод нескольких вариантов
-            # Например, мы сразу сохраняем вариант и предлагаем inline меню для добавления ещё варианта или перехода дальше
-            # (В данной реализации сохраняется каждый введённый вариант)
-            # Предположим, что функция create_variant уже реализована (ее можно добавить в DatabaseConnector)
-            # from queries import db_connector  # если не импортирован глобально
-            game_id = current_state.split(":")[2]
-            question_id = current_state.split(":")[3]
-            variant = self.connector.create_variant(question_id, text)  # Здесь, возможно, потребуется уточнить логику
+        # elif current_state.endswith(":variants"):
+        #     # Состояние для ввода вариантов ответа
+        #     # Создаем вариант ответа; здесь можно расширить логику, чтобы разрешить ввод нескольких вариантов
+        #     # Например, мы сразу сохраняем вариант и предлагаем inline меню для добавления ещё варианта или перехода дальше
+        #     # (В данной реализации сохраняется каждый введённый вариант)
+        #     # Предположим, что функция create_variant уже реализована (ее можно добавить в DatabaseConnector)
+        #     # from queries import db_connector  # если не импортирован глобально
+        #     game_id = current_state.split(":")[2]
+        #     question_id = current_state.split(":")[3]
+        #     variant = self.connector.create_variant(question_id, text)  # Здесь, возможно, потребуется уточнить логику
 
-            logger.info(f"Variant created. Waiting for further action.")
-            await update.message.reply_text(f"Вариант '{text}' сохранён.")
+        #     logger.info(f"Variant created. Waiting for further action.")
+        #     await update.message.reply_text(f"Вариант '{text}' сохранён.")
 
-            # Отправляем меню: "Добавить ещё вариант" или "Продолжить"
-            keyboard = [
-                [InlineKeyboardButton("Добавить ещё вариант", callback_data=f"{ADMIN}:{ADD_VARIANT}")],
-                [InlineKeyboardButton("Продолжить", callback_data=f"{ADMIN}:{CHANGE_CORRECTNESS}")],
-                # [InlineKeyboardButton("Продолжить", callback_data="{ADMIN}:attach_image")],
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await update.message.reply_text("Выберите действие:", reply_markup=reply_markup)
+        #     # Отправляем меню: "Добавить ещё вариант" или "Продолжить"
+        #     keyboard = [
+        #         [InlineKeyboardButton("Добавить ещё вариант", callback_data=f"{ADMIN}:{ADD_VARIANT}")],
+        #         [InlineKeyboardButton("Продолжить", callback_data=f"{ADMIN}:{CHANGE_CORRECTNESS}")],
+        #         # [InlineKeyboardButton("Продолжить", callback_data="{ADMIN}:attach_image")],
+        #     ]
+        #     reply_markup = InlineKeyboardMarkup(keyboard)
+        #     await update.message.reply_text("Выберите действие:", reply_markup=reply_markup)
         else:
             await update.message.reply_text("Неизвестное состояние. Попробуйте ввести /start.")
 
@@ -357,8 +335,8 @@ class AdminFlow:
         ]
         # Разбиваем кнопки на строки по 2 кнопки
         keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
-        # Добавляем строку с кнопкой "Готово"
-        keyboard.append([InlineKeyboardButton("Готово", callback_data=f"{ADMIN}:{DONE}:{question_id}")])
+        # Добавляем строку с кнопкой DONE_LABEL
+        keyboard.append([InlineKeyboardButton(DONE_LABEL, callback_data=f"{ADMIN}:{DONE}:{question_id}")])
         reply_markup = InlineKeyboardMarkup(keyboard)
         path_to_media = question.path_to_media
         if path_to_media is None:
@@ -408,15 +386,47 @@ class AdminFlow:
             except Exception as e:
                 logger.error(f"Caught exception: {e}")
 
+    async def admin_options(self, update: Update, context: ContextTypes.DEFAULT_TYPE, ):
+        admin_id = update.effective_user.id
+        keyboard = [
+            [InlineKeyboardButton("Создать новую игру",     callback_data=f"{ADMIN}:{CREATE_GAME}")],
+            [InlineKeyboardButton("Редактировать игру",     callback_data=f"{ADMIN}:{GAME_TO_EDIT}")],
+            [InlineKeyboardButton("Удалить игру",           callback_data=f"{ADMIN}:{DELETE_GAME}")],
+            [InlineKeyboardButton("Другие команды",         callback_data=f"{ADMIN}:{START_GAME}")],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await context.bot.send_message(
+            chat_id=admin_id,
+            text="Добро пожаловать, администратор!\nВыберите действие:",
+            reply_markup=reply_markup,
+        )
+
+    async def game_options(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_id):
+        admin_id = update.effective_user.id
+        logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
+        keyboard = [
+            [InlineKeyboardButton(ADD_QUESTION_LABEL,           callback_data=f"{ADMIN}:{ADD_QUESTION}:{game_id}")],
+            [InlineKeyboardButton(QUESTION_TO_EDIT_LABEL,       callback_data=f"{ADMIN}:{QUESTION_TO_EDIT}:{game_id}")],
+            [InlineKeyboardButton(QUESTION_TO_DELETE_LABEL,     callback_data=f"{ADMIN}:{QUESTION_TO_DELETE}:{game_id}")],
+            [InlineKeyboardButton(CANCEL_LABEL,                 callback_data=f"{ADMIN}:{GAME_OPTIONS}")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await context.bot.send_message(
+            chat_id=admin_id,
+            text=f"Что вы хотите сделать с игрой? (from current_state == \"{ADMIN}:{CREATE_GAME}\")",
+            reply_markup=reply_markup,
+        )
+
     async def question_options(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id):
         admin_id = update.effective_user.id
+        logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
         game_id = self.connector.get_question(question_id).game_id
         keyboard = [
-            [InlineKeyboardButton("Изменить текст вопроса",         callback_data=f"{ADMIN}:{EDIT_QUESTION_TEXT}:{question_id}")],
-            [InlineKeyboardButton("Редактирование вариантов",       callback_data=f"{ADMIN}:{VARIANT_OPTIONS}:{question_id}")],
-            [InlineKeyboardButton("Обновить картинку",              callback_data=f"{ADMIN}:{UPDATE_IMAGE}:{question_id}")],
-            [InlineKeyboardButton("Изменить правильные варианты",   callback_data=f"{ADMIN}:{CHANGE_CORRECTNESS}:{question_id}")],
-            [InlineKeyboardButton("Отмена",                         callback_data=f"{ADMIN}:{GAME_OPTIONS}:{game_id}")],
+            [InlineKeyboardButton(EDIT_QUESTION_TEXT_LABEL,         callback_data=f"{ADMIN}:{EDIT_QUESTION_TEXT}:{question_id}")],
+            [InlineKeyboardButton(VARIANT_OPTIONS_LABEL,            callback_data=f"{ADMIN}:{VARIANT_OPTIONS}:{question_id}")],
+            [InlineKeyboardButton(UPDATE_IMAGE_LABEL,               callback_data=f"{ADMIN}:{UPDATE_IMAGE}:{question_id}")],
+            [InlineKeyboardButton(CHANGE_CORRECTNESS_LABEL,         callback_data=f"{ADMIN}:{CHANGE_CORRECTNESS}:{question_id}")],
+            [InlineKeyboardButton(CANCEL_LABEL,                     callback_data=f"{ADMIN}:{GAME_OPTIONS}:{game_id}")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await context.bot.send_message(
@@ -429,10 +439,10 @@ class AdminFlow:
         admin_id = update.effective_user.id
         logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
         keyboard = [
-            [InlineKeyboardButton("Добавить вариант",               callback_data=f"{ADMIN}:{ADD_VARIANT}:{question_id}")],
-            [InlineKeyboardButton("Изменить вариант",               callback_data=f"{ADMIN}:{EDIT_VARIANT}:{question_id}")],
-            [InlineKeyboardButton("Удалить вариант",                callback_data=f"{ADMIN}:{VARIANT_TO_DELETE}:{question_id}")],
-            [InlineKeyboardButton("Отмена",                         callback_data=f"{ADMIN}:{QUESTION_OPTIONS}:{question_id}")]
+            [InlineKeyboardButton(ADD_VARIANT_LABEL,                callback_data=f"{ADMIN}:{ADD_VARIANT}:{question_id}")],
+            [InlineKeyboardButton(EDIT_VARIANT_LABEL,               callback_data=f"{ADMIN}:{EDIT_VARIANT}:{question_id}")],
+            [InlineKeyboardButton(VARIANT_TO_DELETE_LABEL,          callback_data=f"{ADMIN}:{VARIANT_TO_DELETE}:{question_id}")],
+            [InlineKeyboardButton(CANCEL_LABEL,                     callback_data=f"{ADMIN}:{QUESTION_OPTIONS}:{question_id}")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await context.bot.send_message(
@@ -518,7 +528,7 @@ class AdminFlow:
         admin_id = update.effective_user.id
         logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
         questions = self.connector.get_questions_by_game(game_id)
-        reply_markup = self.generate_inline_buttons_for_questions(update, context, questions, 1, "delete_question")
+        reply_markup = self.generate_inline_buttons_for_questions(update, context, questions, 1, f"{DELETE_QUESTION}")
         print(f"**************************************** game_id = {game_id}, reply_markup = {reply_markup}")
         await context.bot.send_message(
             chat_id=admin_id,
@@ -556,18 +566,7 @@ class AdminFlow:
     async def edit_game_by_game_id(self, update: Update, context: ContextTypes.DEFAULT_TYPE, admin_id: str, game_id: str):
         new_state = f"{ADMIN}:{GAME_OPTIONS}:{game_id}"
         self.connector.update_internal_user_state(admin_id, new_state)
-        keyboard = [
-            [InlineKeyboardButton("Добавить вопрос",        callback_data=f"{ADMIN}:{ADD_QUESTION}:{game_id}")],
-            [InlineKeyboardButton("Редактировать вопрос",   callback_data=f"{ADMIN}:{QUESTION_TO_EDIT}:{game_id}")],
-            [InlineKeyboardButton("Удалить вопрос",         callback_data=f"{ADMIN}:{QUESTION_TO_DELETE}:{game_id}")],
-            [InlineKeyboardButton("Отмена",                 callback_data=f"{ADMIN}:{GAME_OPTIONS}")],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(
-            chat_id=admin_id,
-            text="Что вы хотите сделать с игрой? from edit_game_by_game_id",
-            reply_markup=reply_markup,
-        )
+        await self.game_options(update, context, game_id)
 
     async def delete_question_by_question_id(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: str):
         game_id = self.connector.get_question(question_id).game_id
@@ -575,44 +574,22 @@ class AdminFlow:
         admin_id = update.effective_user.id
         logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
         self.connector.update_internal_user_state(admin_id, new_state)
-        keyboard = [
-            [InlineKeyboardButton("Добавить вопрос",        callback_data=f"{ADMIN}:{ADD_QUESTION}:{game_id}")],
-            [InlineKeyboardButton("Редактировать вопрос",   callback_data=f"{ADMIN}:{QUESTION_TO_EDIT}:{game_id}")],
-            [InlineKeyboardButton("Удалить вопрос",         callback_data=f"{ADMIN}:{QUESTION_TO_DELETE}:{game_id}")],
-            [InlineKeyboardButton("Отмена",                 callback_data=f"{ADMIN}:{GAME_OPTIONS}:{game_id}")],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
         await context.bot.send_message(
             chat_id=admin_id,
             text="Функционал удаления вопроса, пока что, замокан 🙁",
         )
-        await context.bot.send_message(
-            chat_id=admin_id,
-            text="Что вы хотите сделать с игрой? from edit_game_by_game_id",
-            reply_markup=reply_markup,
-        )
+        await self.game_options(update, context, game_id)
 
     async def delete_game_by_game_id(self, update: Update, context: ContextTypes.DEFAULT_TYPE, admin_id: str, game_id: str):
         new_state = f"{ADMIN}:{GAME_OPTIONS}"
         admin_id = update.effective_user.id
         logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
         self.connector.update_internal_user_state(admin_id, new_state)
-        keyboard = [
-            [InlineKeyboardButton("Создать новую игру",     callback_data=f"{ADMIN}:{CREATE_GAME}")],
-            [InlineKeyboardButton("Редактировать игру",     callback_data=f"{ADMIN}:{GAME_TO_EDIT}")],
-            [InlineKeyboardButton("Удалить игру",           callback_data=f"{ADMIN}:{DELETE_GAME}")],
-            [InlineKeyboardButton("Другие команды",         callback_data=f"{ADMIN}:{START_GAME}")],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
         await context.bot.send_message(
             chat_id=admin_id,
             text="Функционал удаления игры, пока что, замокан 🙁",
         )
-        await context.bot.send_message(
-            chat_id=admin_id,
-            text="Добро пожаловать, администратор!\nВыберите действие:",
-            reply_markup=reply_markup,
-        )
+        await self.admin_options(update, context)
         logger.info(f"Админ {admin_id} запущен в режиме '{GAME_OPTIONS}'.")
 
     async def delete_variant_by_variant_id(self, update: Update, context: ContextTypes.DEFAULT_TYPE, variant_id: str):
@@ -650,7 +627,7 @@ class AdminFlow:
         if navigation_buttons:
             keyboard.append(navigation_buttons)
         game_id = questions[0].game_id
-        keyboard.append([InlineKeyboardButton("Отмена", callback_data=f"{ADMIN}:{GAME_OPTIONS}:{game_id}")])
+        keyboard.append([InlineKeyboardButton(CANCEL_LABEL, callback_data=f"{ADMIN}:{GAME_OPTIONS}:{game_id}")])
 
         return InlineKeyboardMarkup(keyboard)
 
@@ -680,7 +657,7 @@ class AdminFlow:
             navigation_buttons.append(InlineKeyboardButton("➡️", callback_data=f"{ADMIN}:{PAGE_GAMES}|{page + 1}"))
         if navigation_buttons:
             keyboard.append(navigation_buttons)
-        keyboard.append([InlineKeyboardButton("Отмена", callback_data=f"{ADMIN}:{GAME_OPTIONS}")])
+        keyboard.append([InlineKeyboardButton(CANCEL_LABEL, callback_data=f"{ADMIN}:{GAME_OPTIONS}")])
 
         return InlineKeyboardMarkup(keyboard)
 
