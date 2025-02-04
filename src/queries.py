@@ -217,6 +217,12 @@ class DatabaseConnector:
         """
         return self.session.query(Variants).filter(Variants.question_id == question_id).all()
 
+    def delete_variant(self, variant_id: str) -> None:
+        variant = self.get_variant(variant_id)
+        if variant is None:
+            raise ValueError(f"Variant with id {variant_id} not found")
+        self.session.delete(variant)
+        self.session.commit()
 
     # ---------------------------
     # Работа с ответами (Answer)
