@@ -23,6 +23,12 @@ from models import Game, Question
 from settings import ROOT_ID
 import inspect
 from admin_constants import *
+from admin_options import (
+    admin_options,
+    game_options,
+    question_options,
+    variant_options,
+)
 
 logger = get_logger(__name__)
 
@@ -33,12 +39,9 @@ class AdminFlow:
         self.not_selected_variants = {}
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await self.admin_options(update, context)
-
-    async def admin_options(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
         Запускает админский режим.
-        Обновляет состояние администратора до "GAME_OPTIONS" и выводит главное меню.
+        Обновляет состояние администратора до "ADMIN_OPTIONS" и выводит главное меню.
         """
         internal_user = self.connector.get_internal_user_by_telegram_id(ROOT_ID)
         if internal_user is None:
@@ -50,9 +53,9 @@ class AdminFlow:
 
         admin_id = update.effective_user.id
         logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-        self.connector.update_internal_user_state(admin_id, f"{ADMIN}:{GAME_OPTIONS}")
-        await self.admin_options(update, context)
-        logger.info(f"Админ {admin_id} запущен в режиме '{GAME_OPTIONS}'.")
+        self.connector.update_internal_user_state(admin_id, f"{ADMIN}:{ADMIN_OPTIONS}")
+        await admin_options(update, context)
+        logger.info(f"Админ {admin_id} запущен в режиме '{ADMIN_OPTIONS}'.")
 
     # TODO: separate this handler, to make it more readable
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -90,8 +93,8 @@ class AdminFlow:
 
         await query.edit_message_reply_markup(reply_markup=None)
         # TODO: add state checking for all callback
-        if command == f"{GAME_OPTIONS}":
-            await self.admin_options(update, context)
+        if command == f"{ADMIN_OPTIONS}":
+            await self.start(update, context)
         elif command.startswith(f"{DONE}:"):
             # TODO: rewrite this
             # state = {ADMIN}:{VARIANT_OPTIONS}:
@@ -108,7 +111,7 @@ class AdminFlow:
             )
             game_id = self.connector.get_question(question_id).game_id
 
-            await self.question_options(update, context, question_id)
+            await question_options(update, context, question_id, game_id)
 
         elif command == f"{CREATE_GAME}":
             await self.create_game(update, context)
@@ -137,7 +140,7 @@ class AdminFlow:
             question_id = command.split(":")[-1]
             self.connector.update_internal_user_state(admin_id, f"{ADMIN}:{QUESTION_OPTIONS}:{question_id}")
             game_id = self.connector.get_question(question_id).game_id
-            await self.question_options(update, context, question_id)
+            await question_options(update, context, question_id, game_id)
         elif command.startswith(f"{DELETE_QUESTION}:"):
             question_id = command.split(":")[-1]
             await self.delete_question_by_question_id(update, context, question_id)
@@ -155,7 +158,7 @@ class AdminFlow:
             question_id = command.split(":")[-1]
             new_state = f"{ADMIN}:{VARIANT_OPTIONS}:{question_id}"
             self.connector.update_internal_user_state(admin_id, new_state)
-            await self.variant_options(update, context, question_id)
+            await variant_options(update, context, question_id)
         elif command.startswith(f"{ADD_VARIANT}:"):
             # Переводим состояние на ввод варианта (если, например, состояние выглядит как "...:variants:<n>")
             await query.answer("Введите вариант ответа.")
@@ -170,7 +173,7 @@ class AdminFlow:
         #     new_state = f"{ADMIN}:{VARIANT_OPTIONS}:{question_id}"
         #     self.connector.update_internal_user_state(admin_id, new_state)
         #     await self.variant_to_delete()
-        #     await self.variant_options(update, context, question_id)
+        #     await game_options(update, context, question_id)
         elif command.startswith(f"{UPDATE_IMAGE}:"):
             await query.edit_message_text("Пришлите изображение в виде фото.")
             question_id = command.split(":")[-1]
@@ -251,7 +254,7 @@ class AdminFlow:
             logger.info(f"Game {game_id} created. State updated to {new_state}.")
 
             await update.message.reply_text(f"Игра '{text}' создана.")
-            await self.game_options(update, context, game_id)
+            await game_options(update, context, game_id)
         elif current_state.startswith(f"{ADMIN}:{ADD_QUESTION}:"):
             game_id = current_state.split(":")[-1]
             question = self.connector.create_question(game_id, text)
@@ -260,7 +263,7 @@ class AdminFlow:
             new_state = f"{ADMIN}:{EDIT_QUESTION_TEXT}:{question_id}"
             self.connector.update_internal_user_state(admin_id, new_state)
             logger.info(f"Question {question_id} created. State updated to {new_state}.")
-            await self.question_options(update, context, question_id)
+            await question_options(update, context, question_id, game_id)
         elif current_state.startswith(f"{ADMIN}:{EDIT_QUESTION_TEXT}:"):
             question_id = current_state.split(":")[-1]
             print(f"************************** question_id = {question_id}")
@@ -269,7 +272,7 @@ class AdminFlow:
             new_state = f"{ADMIN}:{QUESTION_OPTIONS}:{question_id}"
             self.connector.update_internal_user_state(admin_id, new_state)
             game_id = self.connector.get_question(question_id).game_id
-            await self.question_options(update, context, question_id)
+            await question_options(update, context, question_id, game_id)
         elif current_state.startswith(f"{ADMIN}:{ADD_VARIANT}:"):
             question_id = current_state.split(":")[-1]
             self.connector.create_variant(question_id, text)
@@ -279,29 +282,7 @@ class AdminFlow:
             )
             new_state = f"{ADMIN}:{VARIANT_OPTIONS}:{question_id}"
             self.connector.update_internal_user_state(admin_id, new_state)
-            await self.variant_options(update, context, question_id)
-        # elif current_state.endswith(":variants"):
-        #     # Состояние для ввода вариантов ответа
-        #     # Создаем вариант ответа; здесь можно расширить логику, чтобы разрешить ввод нескольких вариантов
-        #     # Например, мы сразу сохраняем вариант и предлагаем inline меню для добавления ещё варианта или перехода дальше
-        #     # (В данной реализации сохраняется каждый введённый вариант)
-        #     # Предположим, что функция create_variant уже реализована (ее можно добавить в DatabaseConnector)
-        #     # from queries import db_connector  # если не импортирован глобально
-        #     game_id = current_state.split(":")[2]
-        #     question_id = current_state.split(":")[3]
-        #     variant = self.connector.create_variant(question_id, text)  # Здесь, возможно, потребуется уточнить логику
-
-        #     logger.info(f"Variant created. Waiting for further action.")
-        #     await update.message.reply_text(f"Вариант '{text}' сохранён.")
-
-        #     # Отправляем меню: "Добавить ещё вариант" или "Продолжить"
-        #     keyboard = [
-        #         [InlineKeyboardButton("Добавить ещё вариант", callback_data=f"{ADMIN}:{ADD_VARIANT}")],
-        #         [InlineKeyboardButton("Продолжить", callback_data=f"{ADMIN}:{CHANGE_CORRECTNESS}")],
-        #         # [InlineKeyboardButton("Продолжить", callback_data="{ADMIN}:attach_image")],
-        #     ]
-        #     reply_markup = InlineKeyboardMarkup(keyboard)
-        #     await update.message.reply_text("Выберите действие:", reply_markup=reply_markup)
+            await variant_options(update, context, question_id)
         else:
             await update.message.reply_text("Неизвестное состояние. Попробуйте ввести /start.")
 
@@ -321,8 +302,6 @@ class AdminFlow:
         question = self.connector.get_question(question_id)
         question_text = question.question_text
         variants = self.connector.get_variants_by_question(question_id)
-        # update.message.reply_text(question_text)
-        # Для каждого варианта создаём кнопку. Callback data имеет формат "{ADMIN}:{SELECT}|<variant_id>"
 
         raw_variants = self.connector.get_correct_variants_by_question_id(question_id)
         self.selected_variants[question_id] = set(variant.id for variant in raw_variants)
@@ -357,8 +336,6 @@ class AdminFlow:
     def update_variant_correctness(self, update: Update, context: ContextTypes.DEFAULT_TYPE, variant_id: str, is_correct: bool = True):
         variant = self.connector.get_variant(variant_id)
         self.update_variant_correctness_cached(update=update, context=context, variant_id=variant_id, question_id=variant.question_id)
-        # print(f"************************************** update_variant_correctness, variant_id = {variant_id}")
-        # self.connector.update_variant_correctness(variant_id, is_correct)
 
     def update_variant_correctness_cached(self, update: Update, context: ContextTypes.DEFAULT_TYPE, variant_id: str, question_id: str):
         admin_id = update.effective_user.id
@@ -385,71 +362,6 @@ class AdminFlow:
                 self.not_selected_variants[question_id].remove(variant_id)
             except Exception as e:
                 logger.error(f"Caught exception: {e}")
-
-    async def admin_options(self, update: Update, context: ContextTypes.DEFAULT_TYPE, ):
-        admin_id = update.effective_user.id
-        keyboard = [
-            [InlineKeyboardButton("Создать новую игру",     callback_data=f"{ADMIN}:{CREATE_GAME}")],
-            [InlineKeyboardButton("Редактировать игру",     callback_data=f"{ADMIN}:{GAME_TO_EDIT}")],
-            [InlineKeyboardButton("Удалить игру",           callback_data=f"{ADMIN}:{DELETE_GAME}")],
-            [InlineKeyboardButton("Другие команды",         callback_data=f"{ADMIN}:{START_GAME}")],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(
-            chat_id=admin_id,
-            text="Добро пожаловать, администратор!\nВыберите действие:",
-            reply_markup=reply_markup,
-        )
-
-    async def game_options(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_id):
-        admin_id = update.effective_user.id
-        logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-        keyboard = [
-            [InlineKeyboardButton(ADD_QUESTION_LABEL,           callback_data=f"{ADMIN}:{ADD_QUESTION}:{game_id}")],
-            [InlineKeyboardButton(QUESTION_TO_EDIT_LABEL,       callback_data=f"{ADMIN}:{QUESTION_TO_EDIT}:{game_id}")],
-            [InlineKeyboardButton(QUESTION_TO_DELETE_LABEL,     callback_data=f"{ADMIN}:{QUESTION_TO_DELETE}:{game_id}")],
-            [InlineKeyboardButton(CANCEL_LABEL,                 callback_data=f"{ADMIN}:{GAME_OPTIONS}")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(
-            chat_id=admin_id,
-            text=f"Что вы хотите сделать с игрой? (from current_state == \"{ADMIN}:{CREATE_GAME}\")",
-            reply_markup=reply_markup,
-        )
-
-    async def question_options(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id):
-        admin_id = update.effective_user.id
-        logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-        game_id = self.connector.get_question(question_id).game_id
-        keyboard = [
-            [InlineKeyboardButton(EDIT_QUESTION_TEXT_LABEL,         callback_data=f"{ADMIN}:{EDIT_QUESTION_TEXT}:{question_id}")],
-            [InlineKeyboardButton(VARIANT_OPTIONS_LABEL,            callback_data=f"{ADMIN}:{VARIANT_OPTIONS}:{question_id}")],
-            [InlineKeyboardButton(UPDATE_IMAGE_LABEL,               callback_data=f"{ADMIN}:{UPDATE_IMAGE}:{question_id}")],
-            [InlineKeyboardButton(CHANGE_CORRECTNESS_LABEL,         callback_data=f"{ADMIN}:{CHANGE_CORRECTNESS}:{question_id}")],
-            [InlineKeyboardButton(CANCEL_LABEL,                     callback_data=f"{ADMIN}:{GAME_OPTIONS}:{game_id}")],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(
-            chat_id=admin_id,
-            text="Можете редактировать вопрос",
-            reply_markup=reply_markup,
-        )
-
-    async def variant_options(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id):
-        admin_id = update.effective_user.id
-        logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-        keyboard = [
-            [InlineKeyboardButton(ADD_VARIANT_LABEL,                callback_data=f"{ADMIN}:{ADD_VARIANT}:{question_id}")],
-            [InlineKeyboardButton(EDIT_VARIANT_LABEL,               callback_data=f"{ADMIN}:{EDIT_VARIANT}:{question_id}")],
-            [InlineKeyboardButton(VARIANT_TO_DELETE_LABEL,          callback_data=f"{ADMIN}:{VARIANT_TO_DELETE}:{question_id}")],
-            [InlineKeyboardButton(CANCEL_LABEL,                     callback_data=f"{ADMIN}:{QUESTION_OPTIONS}:{question_id}")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(
-            chat_id=admin_id,
-            text=f"Что вы хотите сделать с вариантами ответов? (from current_state == \"{ADMIN}:{VARIANT_OPTIONS}:\")",
-            reply_markup=reply_markup,
-        )
 
     async def handle_photo(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -493,23 +405,7 @@ class AdminFlow:
         new_state = f"{ADMIN}:{QUESTION_OPTIONS}:{question_id}"
         self.connector.update_internal_user_state(admin_id, new_state)
 
-        await self.question_options(update, context, question_id)
-
-    # async def send_after_question_menu(self, update: Update):
-    #     """
-    #     Отправляет inline-меню после добавления вопроса.
-    #     """
-    #     logger.info(f"{ADMIN} {update.effective_user.id} called {inspect.currentframe().f_code.co_name}")
-    #     keyboard = [
-    #         [InlineKeyboardButton("Добавить еще вопрос", callback_data=f"{ADMIN}:{ADD_QUESTION}")],
-    #         [InlineKeyboardButton("Завершить создание игры", callback_data=f"{ADMIN}:finish_game")],
-    #     ]
-    #     reply_markup = InlineKeyboardMarkup(keyboard)
-    #     if hasattr(update, "edit_message_text"):
-    #         await update.edit_message_text("Выберите действие:", reply_markup=reply_markup)
-    #     else:
-    #         await update.reply_text("Выберите действие:", reply_markup=reply_markup)
-    #     logger.info("Отправлено меню после вопроса.")
+        await question_options(update, context, question_id, game_id)
 
     async def question_to_edit(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_id: str):
         admin_id = update.effective_user.id
@@ -566,7 +462,7 @@ class AdminFlow:
     async def edit_game_by_game_id(self, update: Update, context: ContextTypes.DEFAULT_TYPE, admin_id: str, game_id: str):
         new_state = f"{ADMIN}:{GAME_OPTIONS}:{game_id}"
         self.connector.update_internal_user_state(admin_id, new_state)
-        await self.game_options(update, context, game_id)
+        await game_options(update, context, game_id)
 
     async def delete_question_by_question_id(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: str):
         game_id = self.connector.get_question(question_id).game_id
@@ -578,10 +474,10 @@ class AdminFlow:
             chat_id=admin_id,
             text="Функционал удаления вопроса, пока что, замокан 🙁",
         )
-        await self.game_options(update, context, game_id)
+        await game_options(update, context, game_id)
 
     async def delete_game_by_game_id(self, update: Update, context: ContextTypes.DEFAULT_TYPE, admin_id: str, game_id: str):
-        new_state = f"{ADMIN}:{GAME_OPTIONS}"
+        new_state = f"{ADMIN}:{ADMIN_OPTIONS}"
         admin_id = update.effective_user.id
         logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
         self.connector.update_internal_user_state(admin_id, new_state)
@@ -589,8 +485,8 @@ class AdminFlow:
             chat_id=admin_id,
             text="Функционал удаления игры, пока что, замокан 🙁",
         )
-        await self.admin_options(update, context)
-        logger.info(f"Админ {admin_id} запущен в режиме '{GAME_OPTIONS}'.")
+        await admin_options(update, context)
+        logger.info(f"Админ {admin_id} запущен в режиме '{ADMIN_OPTIONS}'.")
 
     async def delete_variant_by_variant_id(self, update: Update, context: ContextTypes.DEFAULT_TYPE, variant_id: str):
         question_id = self.connector.get_variant(variant_id)
@@ -598,7 +494,7 @@ class AdminFlow:
         admin_id = update.effective_user.id
         logger.info(f"{ADMIN} {admin_id} called delete_variant_by_variant_id")
         self.connector.delete_variant(variant_id)
-        await self.variant_options(update, context, question_id)
+        await variant_options(update, context, question_id)
 
     def generate_inline_buttons_for_questions(self, update: Update, context: ContextTypes.DEFAULT_TYPE, questions: list[Question], page = 1, action: str = f"{QUESTION_OPTIONS}"):
         admin_id = update.effective_user.id
@@ -627,7 +523,7 @@ class AdminFlow:
         if navigation_buttons:
             keyboard.append(navigation_buttons)
         game_id = questions[0].game_id
-        keyboard.append([InlineKeyboardButton(CANCEL_LABEL, callback_data=f"{ADMIN}:{GAME_OPTIONS}:{game_id}")])
+        keyboard.append([InlineKeyboardButton(CANCEL_LABEL, callback_data=f"{ADMIN}:{VARIANT_OPTIONS}:{game_id}")])
 
         return InlineKeyboardMarkup(keyboard)
 
@@ -657,7 +553,7 @@ class AdminFlow:
             navigation_buttons.append(InlineKeyboardButton("➡️", callback_data=f"{ADMIN}:{PAGE_GAMES}|{page + 1}"))
         if navigation_buttons:
             keyboard.append(navigation_buttons)
-        keyboard.append([InlineKeyboardButton(CANCEL_LABEL, callback_data=f"{ADMIN}:{GAME_OPTIONS}")])
+        keyboard.append([InlineKeyboardButton(CANCEL_LABEL, callback_data=f"{ADMIN}:{ADMIN_OPTIONS}")])
 
         return InlineKeyboardMarkup(keyboard)
 
@@ -680,13 +576,6 @@ class AdminFlow:
         query = update.callback_query
         await query.edit_message_reply_markup(reply_markup=reply_markup)
         await query.answer()  # Обязательно вызываем query.answer(), чтобы убрать "часики" у кнопки
-
-    # async def add_question(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_id: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     question_id = self.connector.create_question(game_id=game_id, question_text="", path_to_media=None)
-    #     new_state = f"{ADMIN}:{EDIT_QUESTION_TEXT}:{question_id}"
-    #     self.connector.update_internal_user_state(admin_id, new_state)
 
 # Глобальный объект AdminFlow; если у вас может быть несколько администраторов, лучше создавать его при /start для каждого.
 # Здесь мы инициализируем его с использованием сессии из db_connector.
