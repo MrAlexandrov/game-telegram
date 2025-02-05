@@ -19,7 +19,7 @@ async def admin_options(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("Создать новую игру",     callback_data=f"{ADMIN}:{CREATE_GAME}")],
         [InlineKeyboardButton("Редактировать игру",     callback_data=f"{ADMIN}:{GAME_TO_EDIT}")],
-        [InlineKeyboardButton("Удалить игру",           callback_data=f"{ADMIN}:{DELETE_GAME}")],
+        [InlineKeyboardButton("Удалить игру",           callback_data=f"{ADMIN}:{GAME_TO_DELETE}")],
         [InlineKeyboardButton("Другие команды",         callback_data=f"{ADMIN}:{START_GAME}")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -67,7 +67,7 @@ async def variant_options(update: Update, context: ContextTypes.DEFAULT_TYPE, qu
     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
     keyboard = [
         [InlineKeyboardButton(ADD_VARIANT_LABEL,                callback_data=f"{ADMIN}:{ADD_VARIANT}:{question_id}")],
-        [InlineKeyboardButton(EDIT_VARIANT_LABEL,               callback_data=f"{ADMIN}:{EDIT_VARIANT}:{question_id}")],
+        [InlineKeyboardButton(EDIT_VARIANT_LABEL,               callback_data=f"{ADMIN}:{VARIANT_TO_EDIT}:{question_id}")],
         [InlineKeyboardButton(VARIANT_TO_DELETE_LABEL,          callback_data=f"{ADMIN}:{VARIANT_TO_DELETE}:{question_id}")],
         [InlineKeyboardButton(CANCEL_LABEL,                     callback_data=f"{ADMIN}:{QUESTION_OPTIONS}:{question_id}")]
     ]

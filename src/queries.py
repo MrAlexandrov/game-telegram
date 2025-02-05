@@ -211,6 +211,14 @@ class DatabaseConnector:
         self.session.commit()
         return variant
 
+    def update_variant_text(self, variant_id: str, new_text: str) -> Variants:
+        variant = self.session.query(Variants).filter(Variants.id == variant_id).first()
+        if variant is None:
+            raise ValueError(f"Question with id {variant_id} not found.")
+        variant.answer_text = new_text
+        self.session.commit()
+        return variant
+
     def get_variants_by_question(self, question_id: str) -> list[Variants]:
         """
         Возвращает все ответы для заданного вопроса.

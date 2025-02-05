@@ -3,7 +3,8 @@ ADMIN                       = "admin"
 ADMIN_OPTIONS               = "admin_options"
 
 CREATE_GAME                 = "game_create"
-GAME_TO_EDIT                = "game_edit"
+GAME_TO_EDIT                = "game_to_edit"
+GAME_TO_DELETE              = "game_to_delete"
 DELETE_GAME                 = "game_delete"
 START_GAME                  = "game_start"
 
@@ -18,9 +19,10 @@ DELETE_QUESTION             = "question_delete"
 
 VARIANT_OPTIONS             = "variant_options"
 ADD_VARIANT                 = "variant_add"
-EDIT_VARIANT                = "variant_edit"
+VARIANT_TO_EDIT             = "variant_edit"
 VARIANT_TO_DELETE           = "variant_to_delete"
 EDIT_VARIANT_TEXT           = "variant_edit_text"
+DELETE_VARIANT              = "variant_delete"
 
 UPDATE_IMAGE                = "update_image"
 CHANGE_CORRECTNESS          = "change_correctness"
@@ -28,6 +30,7 @@ CHANGE_CORRECTNESS          = "change_correctness"
 
 PAGE_GAMES                  = "page_games"
 PAGE_QUESTIONS              = "page_questions"
+PAGE_VARIANTS               = "page_variants"
 
 DONE                        = "done"
 SELECT                      = "select"
