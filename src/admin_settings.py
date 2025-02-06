@@ -1,22 +1,13 @@
 # admin_settings.py
 from admin_constants import *
+from constants import *
 
-LABEL               = "label"
-DEPENDENCIES        = "dependencies"
-BEGIN_MESSAGE       = "begin_message"
-ACTION              = "action"
-FORWARD_STATES      = "forward_states"
-BACKWARD_STATES     = "backward_states"
-END_MESSAGE         = "end_message"
-
-CALLBACK            = "callback"
-TEXT                = "text"
-LIST                = "list"
-IMAGE               = "image"
 
 GAME_ID             = "game_id"
 QUESTION_ID         = "question_id"
 VARIANT_ID          = "variant_id"
+
+GAME_WORKFLOW = "game_workflow"
 
 ADMIN_STATES = {
     ADMIN_OPTIONS: {
@@ -24,7 +15,7 @@ ADMIN_STATES = {
         DEPENDENCIES:       None,
         BEGIN_MESSAGE:      "Здравствуй, администратор!\nВыберите действие",
         ACTION:             CALLBACK,
-        FORWARD_STATES:     [CREATE_GAME, GAME_TO_EDIT, GAME_TO_DELETE],
+        FORWARD_STATES:     [CREATE_GAME, GAME_TO_EDIT, GAME_TO_DELETE, GAME_TO_START],
         BACKWARD_STATES:    None,
         END_MESSAGE:        None,
     },
@@ -198,5 +189,32 @@ ADMIN_STATES = {
         FORWARD_STATES:     [VARIANT_OPTIONS],
         BACKWARD_STATES:    None, # TODO: add functionality to write VARIANT_OPTIONS here
         END_MESSAGE:        "Вариант изменён",
+    },
+    GAME_TO_START: {
+        LABEL:              "Начать игру",
+        DEPENDENCIES:       None,
+        BEGIN_MESSAGE:      "Выберите игру, которую хотите запустить",
+        ACTION:             LIST,
+        FORWARD_STATES:     [WAITING_START],
+        BACKWARD_STATES:    [ADMIN_OPTIONS],
+        END_MESSAGE:        None,
+    },
+    WAITING_START: {
+        LABEL:              "Ожидание начала",
+        DEPENDENCIES:       GAME_ID,
+        BEGIN_MESSAGE:      "Ожидание всех игроков",
+        ACTION:             CALLBACK,
+        FORWARD_STATES:     None,
+        BACKWARD_STATES:    [ADMIN_OPTIONS],
+        END_MESSAGE:        None,
+    },
+    GAME_WORKFLOW: {
+        LABEL:              "Тут игра должна идти",
+        DEPENDENCIES:       GAME_ID,
+        BEGIN_MESSAGE:      "Нужно куда-то прикрепить клаву",
+        ACTION:             CALLBACK,
+        FORWARD_STATES:     None,
+        BACKWARD_STATES:    None,
+        END_MESSAGE:        None,
     },
 }

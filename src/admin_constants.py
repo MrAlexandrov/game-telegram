@@ -54,3 +54,7 @@ VARIANT_TO_DELETE_LABEL     = "Удалить вариант"
 
 DONE_LABEL                  = "Готово"
 CANCEL_LABEL                = "Отмена"
+
+
+GAME_TO_START               = "game_to_start"
+WAITING_START               = "waiting_start"

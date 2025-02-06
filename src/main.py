@@ -31,6 +31,8 @@ async def routing_start_command(update: Update, context):
     иначе – gamer_start() из модуля gamer_flow.py.
     """
     user_id = update.effective_user.id
+    logger.debug(f"user_id = {user_id}")
+    logger.debug(f"ADMIN_IDS = {ADMIN_IDS}")
     if user_id in ADMIN_IDS:
         await admin_flow.start(update, context)
     else:
@@ -42,6 +44,8 @@ async def routing_message_handler(update: Update, context):
     Направляет сообщение в админский или геймерский обработчик в зависимости от Telegram ID.
     """
     user_id = update.effective_user.id
+    logger.debug(f"user_id = {user_id}")
+    logger.debug(f"ADMIN_IDS = {ADMIN_IDS}")
     if user_id in ADMIN_IDS:
         await admin_flow.handle_text(update, context)
     else:
@@ -53,10 +57,12 @@ async def routing_photo_handler(update: Update, context):
     Направляет сообщение в админский или геймерский обработчик в зависимости от Telegram ID.
     """
     user_id = update.effective_user.id
+    logger.debug(f"user_id = {user_id}")
+    logger.debug(f"ADMIN_IDS = {ADMIN_IDS}")
     if user_id in ADMIN_IDS:
         await admin_flow.handle_photo(update, context)
-    else:
-        await gamer_flow.handle_photo(update, context)
+    # else:
+    #     await gamer_flow.handle_photo(update, context)
 
 async def routing_callback_handler(update: Update, context):
     """Маршрутизатор для inline-обработчиков (callback_query).

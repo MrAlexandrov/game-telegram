@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from constants import *
 
 # Загружаем переменные окружения из файла .env
-load_dotenv()
+# load_dotenv()
 
 # Получаем токен бота из переменной окружения
 BOT_TOKEN = getenv('BOT_TOKEN')
