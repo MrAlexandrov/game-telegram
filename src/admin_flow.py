@@ -136,6 +136,11 @@ class AdminFlow:
             # action = ADMIN_STATES[raw_state][FORWARD_STATES][0]
             internal_user_state_in_db = self.connector.get_internal_user_state(admin_id)
             action = internal_user_state_in_db.split(":")[1]
+            if action == GAME_TO_EDIT:
+                action = GAME_OPTIONS
+            # TODO: resolve it
+            # elif action == GAME_TO_DELETE:
+            #     action = 
             logger.debug(f"state = {internal_user_state_in_db}")
             new_page = int(next_state.split("|", 1)[-1])
             await self.handle_changing_page_games(update, context, admin_id, new_page, action)
@@ -148,6 +153,9 @@ class AdminFlow:
             # action = ADMIN_STATES[raw_state][FORWARD_STATES][0]
             internal_user_state_in_db = self.connector.get_internal_user_state(admin_id)
             action = internal_user_state_in_db.split(":")[1]
+            if action == QUESTION_TO_EDIT:
+                action = QUESTION_OPTIONS
+            # TODO: write unify handler, using config
             logger.debug(f"state = {internal_user_state_in_db}")
             new_page = int(next_state.split("|", 1)[-1])
             game_id = self.connector.get_internal_user_state(admin_id).split(":")[-1]
@@ -161,6 +169,9 @@ class AdminFlow:
             # action = ADMIN_STATES[raw_state][FORWARD_STATES][0]
             internal_user_state_in_db = self.connector.get_internal_user_state(admin_id)
             action = internal_user_state_in_db.split(":")[1]
+            if action == VARIANT_TO_EDIT:
+                action = VARIANT_OPTIONS
+            # TODO: rewrite
             logger.debug(f"state = {internal_user_state_in_db}")
             new_page = int(next_state.split("|", 1)[-1])
             question_id = self.connector.get_internal_user_state(admin_id).split(":")[-1]
@@ -803,6 +814,33 @@ class AdminFlow:
             if not message_ids:
                 del self.sent_messages[chat_id]
 
+    async def finish_game(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_session_id: str):
+        players = self.connector.get_players_by_game_session_id(game_session_id)
+        player_ids = [player.telegram_id for player in players]
+        await self.send_message_to_everyone(update, context, player_ids, "Игра закончена!", None, None)
+
+    async def send_message_to_everyone(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_ids: list, text: str, reply_markup, path_to_image: str | None = None):
+        for player in user_ids:
+            try:
+                if path_to_image:
+                    sent_message = await context.bot.send_photo(
+                        chat_id=player,
+                        photo=path_to_image,
+                        caption=text,
+                        reply_markup=reply_markup,
+                    )
+                else:
+                    sent_message = await context.bot.send_message(
+                        chat_id=player,
+                        text=text,
+                        reply_markup=reply_markup,
+                    )
+                # Сохраняем message_id в словаре для данного chat_id
+                self.sent_messages.setdefault(player, []).append(sent_message.message_id)
+            except Exception as e:
+                logger.error(f"Ошибка при отправке сообщения для {player}: {e}")
+        logger.debug(f"sent messages = {self.sent_messages}")
+
     async def send_question_to_everyone(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_session_id: str, question_number: int):
         admin_id = update.effective_user.id
         logger.debug(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
@@ -810,32 +848,18 @@ class AdminFlow:
         game_id = self.connector.get_game_session(game_session_id).game_id
         questions = self.connector.get_questions_by_game(game_id)
         logger.debug(f"questions = {questions}")
+        if len(questions) <= question_number:
+            await self.finish_game(update, context, game_session_id)
+            return
         current_question_id = questions[question_number].id
         logger.debug(f"current_question_id = {current_question_id}")
         self.connector.update_game_session_state(game_session_id, current_question_id)
         self.connector.update_game_session_question_id(game_session_id, current_question_id)
         text, reply_markup, path_to_image = self.get_question_data_to_send_players(update, context, current_question_id)
         logger.debug(f"text = {text}, reply_markup = {reply_markup}, path_to_image = {path_to_image}")
-        for player in players:
-            try:
-                if path_to_image:
-                    sent_message = await context.bot.send_photo(
-                        chat_id=player.telegram_id,
-                        photo=path_to_image,
-                        caption=text,
-                        reply_markup=reply_markup,
-                    )
-                else:
-                    sent_message = await context.bot.send_message(
-                        chat_id=player.telegram_id,
-                        text=text,
-                        reply_markup=reply_markup,
-                    )
-                # Сохраняем message_id в словаре для данного chat_id
-                self.sent_messages.setdefault(player.telegram_id, []).append(sent_message.message_id)
-            except Exception as e:
-                logger.error(f"Ошибка при отправке сообщения для {player.telegram_id}: {e}")
-        logger.debug(f"sent messages = {self.sent_messages}")
+        player_ids = [player.telegram_id for player in players]
+        await self.send_message_to_everyone(update, context, player_ids, text, reply_markup, path_to_image)
+
         keyboard = [
             [InlineKeyboardButton("➡️", callback_data=f"{ADMIN}:{CHANGE_QUESTION}|{question_number + 1}")]
         ]
@@ -845,6 +869,7 @@ class AdminFlow:
             text="Можешь переключать вопросы",
             reply_markup=reply_markup,
         )
+        return
 
     async def start_game(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_session_id: str):
         admin_id = update.effective_user.id
