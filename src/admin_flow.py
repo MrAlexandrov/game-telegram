@@ -563,7 +563,7 @@ class AdminFlow:
 
         buttons = [
             InlineKeyboardButton(
-                variant.answer_text, callback_data=f"{ADMIN}:{GAME_WORKFLOW}:{variant.id}",
+                variant.answer_text, callback_data=f"{GAME_WORKFLOW}:{variant.id}",
             )
             for variant in variants
         ]
@@ -815,6 +815,7 @@ class AdminFlow:
         self.connector.update_game_session_state(game_session_id, current_question_id)
         self.connector.update_game_session_question_id(game_session_id, current_question_id)
         text, reply_markup, path_to_image = self.get_question_data_to_send_players(update, context, current_question_id)
+        logger.debug(f"text = {text}, reply_markup = {reply_markup}, path_to_image = {path_to_image}")
         for player in players:
             try:
                 if path_to_image:

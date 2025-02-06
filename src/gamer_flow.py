@@ -83,13 +83,18 @@ class GamerFlow:
         gamer_id = update.effective_user.id
         logger.info(f"{GAMER} {gamer_id} called {inspect.currentframe().f_code.co_name}")
         query = update.callback_query
+        try:
+            await query.answer("Ок")
+            await query.edit_message_reply_markup(reply_markup=None)
+        except Exception as e:
+            logger.error(f"Something went wrong, while hiding old keyboard in gamer callback")
         data = query.data
         logger.debug(f"got {data} callback from {gamer_id} user")
         variant_id = data.split(":")[-1]
         variant = self.connector.get_variant(variant_id)
-
-        self.connector.create_answer(variant_id, gamer_id, data, time.time(), variant.is_correct)
-        game_session_id = self.connector.get_game_session_id_by_player_id(gamer_id)
+        logger.debug(f"variant = {variant}")
+        self.connector.create_answer(variant_id, gamer_id, data, time.time())
+        game_session_id = self.connector.get_player_by_telegram_id(gamer_id).game_session_id
         self.connector.increase_result_score(gamer_id, game_session_id, int(variant.is_correct))
 
 from queries import db_connector

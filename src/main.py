@@ -69,12 +69,14 @@ async def routing_callback_handler(update: Update, context):
     Вызывает соответствующий обработчик в зависимости от типа пользователя.
     """
     user_id = update.effective_user.id
-    if user_id in ADMIN_IDS:
+    if update.callback_query.data.startswith("admin"):
         await admin_flow.handle_callback(update, context)
     else:
-        pass
-        # await gamer_flow.callback_handler(update, context)
-
+        await gamer_flow.handle_callback(update, context)
+    # if user_id in ADMIN_IDS:
+    #     await admin_flow.handle_callback(update, context)
+    # else:
+    #     await gamer_flow.handle_callback(update, context)
 
 def main():
     application = Application.builder().token(BOT_TOKEN).build()

@@ -192,13 +192,20 @@ class DatabaseConnector:
     # ---------------------------
     # Работа с ответами (Answer)
     # ---------------------------
-    def create_answer(self, variant_id: str, player_id: str, answer_text: str, answered_at: int = 0, is_correct: bool = False) -> Answer:
+    def create_answer(
+            self, 
+            variant_id: str, 
+            player_id: str, 
+            answer_text: str, 
+            answered_at: int = 0, 
+            # is_correct: bool = False,
+            ) -> Answer:
         new_answer = Answer(
             variant_id=variant_id,
             user_id=player_id,
             answer_text=answer_text,
             answered_at=answered_at,
-            is_correct=is_correct,
+            # is_correct=is_correct,
         )
         self.session.add(new_answer)
         self.session.commit()
