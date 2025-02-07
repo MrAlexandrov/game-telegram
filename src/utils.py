@@ -23,3 +23,12 @@ def generate_qr_code(data):
     img.save(filename, format="JPEG")
     
     return filename
+
+import re
+
+def is_valid_uuid4(s):
+    uuid4_pattern = re.compile(
+        r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+        re.IGNORECASE
+    )
+    return bool(uuid4_pattern.match(s))

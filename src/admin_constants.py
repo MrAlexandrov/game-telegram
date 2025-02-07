@@ -9,7 +9,7 @@ DELETE_GAME                 = "game_delete"
 START_GAME                  = "game_start"
 
 GAME_OPTIONS                = "game_options"
-ADD_QUESTION                = "question_add"
+ADD_QUESTION                = "question_create"
 QUESTION_TO_EDIT            = "question_to_edit"
 QUESTION_TO_DELETE          = "question_to_delete"
 
@@ -18,7 +18,7 @@ EDIT_QUESTION_TEXT          = "question_edit_text"
 DELETE_QUESTION             = "question_delete"
 
 VARIANT_OPTIONS             = "variant_options"
-ADD_VARIANT                 = "variant_add"
+ADD_VARIANT                 = "variant_create"
 VARIANT_TO_EDIT             = "variant_edit"
 VARIANT_TO_DELETE           = "variant_to_delete"
 EDIT_VARIANT_TEXT           = "variant_edit_text"

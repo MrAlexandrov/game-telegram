@@ -35,9 +35,10 @@ class InternalUser(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     telegram_id = Column(Integer, nullable=False)
-    nickname = Column(String, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    state = Column(String, nullable=False, default="start")
+    nickname = Column(String, nullable=True)
+    hashed_password = Column(String, nullable=True)
+    state = Column(String, nullable=False, default="admin_options")
+    object_id = Column(String, nullable=True)
 
     # Отношения
     games_created = relationship("Game", back_populates="created_by_user", cascade="all, delete-orphan")
@@ -50,9 +51,9 @@ class Game(Base):
     __tablename__ = 'games'
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    type = Column(String, nullable=False)
     title = Column(String, nullable=False)
     created_by = Column(String, ForeignKey('internal_users.id'), nullable=True)
+    # type = Column(String, nullable=False)
 
     # Отношения
     created_by_user = relationship("InternalUser", back_populates="games_created")

@@ -272,11 +272,10 @@ class DatabaseConnector:
     # ---------------------------
     # Работа с играми (Game) и внутренними пользователями (InternalUser)
     # ---------------------------
-    def create_game(self, game_type: str, title: str, created_by: str = None) -> Game:
+    def create_game(self, created_by: str, title: str) -> Game:
         new_game = Game(
-            type=game_type,
-            title=title,
             created_by=created_by,
+            title=title,
         )
         self.session.add(new_game)
         self.session.commit()
@@ -288,12 +287,12 @@ class DatabaseConnector:
     def get_game(self, game_id: str) -> Game:
         return self.session.query(Game).filter(Game.id == game_id).first()
 
-    def create_internal_user(self, telegram_id: int, nickname: str, hashed_password: str) -> InternalUser:
+    def create_internal_user(self, telegram_id: int, state: str | None = None, object_id: str | None = None) -> InternalUser:
         logger.info(f"called {__name__}")
         new_user = InternalUser(
             telegram_id=telegram_id,
-            nickname=nickname,
-            hashed_password=hashed_password,
+            state=state,
+            object_id=object_id,
         )
         self.session.add(new_user)
         self.session.commit()
@@ -305,11 +304,12 @@ class DatabaseConnector:
     def get_internal_user_by_telegram_id(self, telegram_id: int) -> InternalUser:
         return self.session.query(InternalUser).filter(InternalUser.telegram_id == telegram_id).first()
 
-    def update_internal_user_state(self, telegram_id: int, new_state: str) -> InternalUser:
+    def update_internal_user_state(self, telegram_id: int, new_state: str, object_id: str | None = None) -> InternalUser:
         logger.debug(f"admin {telegram_id} change state to {new_state}")
         user = self.get_internal_user_by_telegram_id(telegram_id)
         if user:
             user.state = new_state
+            user.object_id = object_id
             self.session.commit()
         return user
 
