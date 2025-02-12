@@ -31,6 +31,7 @@ from admin_options import (
 )
 from admin_settings import *
 from inline_buttons_generator import generate_inline_buttons_by_state
+import asyncio
 
 logger = get_logger(__name__)
 
@@ -88,6 +89,12 @@ class AdminFlow:
         logger.info(f"current_state = {current_state}")
         raw_state = next_state.split(":")[0]
         logger.debug(f"raw_state = {raw_state}")
+
+        if next_state.startswith(f"{SHOW_RESULTS}:"):
+            await query.edit_message_reply_markup(reply_markup=None)
+            game_session_id = next_state.split(":")[-1]
+            await self.generate_results(update, context, game_session_id)
+            return
 
         if next_state.startswith(f"{GAME_WORKFLOW}:"):
             await query.edit_message_reply_markup(reply_markup=None)
@@ -814,10 +821,30 @@ class AdminFlow:
             if not message_ids:
                 del self.sent_messages[chat_id]
 
+    async def generate_results(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_session_id: str):
+        logger.debug(f"game_session_id: {game_session_id}")
+        results = self.connector.get_results_for_game_session(game_session_id)
+        logger.debug(f"results: {results}")
+        message = "Итак, вот результаты:\n"
+        for i, (nickname, score, total_time) in enumerate(results, start=1):
+            message += f"{i}. {nickname}: {score}\n"
+        players = self.connector.get_players_by_game_session_id(game_session_id)
+        player_ids = [player.telegram_id for player in players]
+        await self.send_message_to_everyone(update, context, player_ids, message, None)
+
     async def finish_game(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_session_id: str):
         players = self.connector.get_players_by_game_session_id(game_session_id)
         player_ids = [player.telegram_id for player in players]
-        await self.send_message_to_everyone(update, context, player_ids, "Игра закончена!", None, None)
+        await self.send_message_to_everyone(update, context, player_ids, "Игра закончена!\nГотовы к реультатам?", None, None)
+        reply_markup = InlineKeyboardMarkup([
+            [InlineKeyboardButton("Показать результаты", callback_data=f"{ADMIN}:{SHOW_RESULTS}:{game_session_id}")]
+        ])
+        admin_id = update.effective_user.id
+        await context.bot.send_message(
+            chat_id=admin_id,
+            text="Теперь можно показать результаты",
+            reply_markup=reply_markup,
+        )
 
     async def send_message_to_everyone(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_ids: list, text: str, reply_markup, path_to_image: str | None = None):
         for player in user_ids:
@@ -859,6 +886,11 @@ class AdminFlow:
         logger.debug(f"text = {text}, reply_markup = {reply_markup}, path_to_image = {path_to_image}")
         player_ids = [player.telegram_id for player in players]
         await self.send_message_to_everyone(update, context, player_ids, text, reply_markup, path_to_image)
+
+        logger.debug(f"going sleep")
+        await asyncio.sleep(63)
+        await self.remove_inline_keyboards(update, context)
+        logger.debug(f"woke up, removed keyboards")
 
         keyboard = [
             [InlineKeyboardButton("➡️", callback_data=f"{ADMIN}:{CHANGE_QUESTION}|{question_number + 1}")]
@@ -923,7 +955,7 @@ class AdminFlow:
     def generate_inline_buttons_for_variants(self, update: Update, context: ContextTypes.DEFAULT_TYPE, variants: list[Variant], page = 1, action: str = f"{VARIANT_OPTIONS}"):
         admin_id = update.effective_user.id
         logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-        per_page = 2
+        per_page = 6
         total_variants = len(variants)
         total_pages = (total_variants + per_page - 1) // per_page # round up
 
@@ -954,7 +986,7 @@ class AdminFlow:
     def generate_inline_buttons_for_questions(self, update: Update, context: ContextTypes.DEFAULT_TYPE, questions: list[Question], page = 1, action: str = f"{QUESTION_OPTIONS}"):
         admin_id = update.effective_user.id
         logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-        per_page = 2
+        per_page = 6
         total_questions = len(questions)
         total_pages = (total_questions + per_page - 1) // per_page # round up
 
@@ -985,7 +1017,7 @@ class AdminFlow:
     def generate_inline_buttons_for_games(self, update: Update, context: ContextTypes.DEFAULT_TYPE, games: list[Game], page = 1, action: str = f"{GAME_OPTIONS}"):
         admin_id = update.effective_user.id
         logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-        per_page = 2
+        per_page = 6
         total_games = len(games)
         total_pages = (total_games + per_page - 1) // per_page # round up
 

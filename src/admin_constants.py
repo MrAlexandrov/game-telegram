@@ -58,3 +58,4 @@ CANCEL_LABEL                = "Отмена"
 
 GAME_TO_START               = "game_to_start"
 WAITING_START               = "waiting_start"
+SHOW_RESULTS                = "show_results"

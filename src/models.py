@@ -27,7 +27,7 @@ class Player(Base):
     result = relationship("Result", back_populates="player", uselist=False)
 
     def __repr__(self):
-        return f"<Player(id='{self.id}', nickname='{self.nickname}')>"
+        return f"<Player(id='{self.id}', nickname='{self.nickname}', game_session_id='{self.game_session_id}')>"
 
 # Таблица внутренних пользователей
 class InternalUser(Base):
@@ -81,7 +81,7 @@ class Question(Base):
     media = relationship("Media", back_populates="question", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<Question(id='{self.id}', text='{self.question_text[:30]}...')>"
+        return f"<Question(id='{self.id}', text='{self.question_text}')>"
 
 # Таблица вариантов ответа
 class Variant(Base):
@@ -95,7 +95,7 @@ class Variant(Base):
     answer = relationship("Answer", back_populates="variant", cascade="all, delete-orphan")
     
     def __repr__(self):
-        return f"<Variant(id='{self.id}', answer_text='{self.answer_text[:20]}...')>"
+        return f"<Variant(id='{self.id}', answer_text='{self.answer_text}')>"
 
 # Таблица ответов пользователей
 class Answer(Base):
@@ -112,7 +112,7 @@ class Answer(Base):
     player = relationship("Player", back_populates="answer")
 
     def __repr__(self):
-        return f"<Answer(id='{self.id}', answer_text='{self.answer_text[:20]}...')>"
+        return f"<Answer(id='{self.id}', user_id='{self.user_id}', answer_text='{self.answer_text}', answered_at='{self.answered_at}')>"
 
 # Таблица медиафайлов
 class Media(Base):
@@ -145,7 +145,7 @@ class Result(Base):
     player = relationship("Player", back_populates="result")
 
     def __repr__(self):
-        return f"<Result(id='{self.id}', score={self.score})>"
+        return f"<Result(id='{self.id}', game_session_id='{self.game_session_id}', user_id='{self.user_id}', score={self.score})>"
 
 # Таблица сессий игры
 class GameSession(Base):

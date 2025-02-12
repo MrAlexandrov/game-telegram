@@ -1,6 +1,8 @@
 # queries.py
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.sql import func
+from sqlalchemy.sql.functions import coalesce
 from models import (
     Base,
     Player,
@@ -110,8 +112,28 @@ class DatabaseConnector:
         self.session.commit()
         return result
 
-    def get_results_by_game_session(self, game_session_id: str) -> list[Result]:
-        return self.session.query(Result).filter(Result.game_session_id == game_session_id).all()
+    def get_results_for_game_session(self, game_session_id: str):
+        time_subq = (
+            self.session.query(
+                Answer.user_id.label("player_id"),
+                coalesce(func.sum(Answer.answered_at), 0).label("total_time")
+            )
+            .group_by(Answer.user_id)
+            .subquery()
+        )
+
+        results = (
+            self.session.query(
+                Player.nickname,
+                Result.score,
+                time_subq.c.total_time
+            )
+            .join(Result, Player.telegram_id == Result.user_id)
+            .outerjoin(time_subq, Player.telegram_id == time_subq.c.player_id)
+            .filter(Result.game_session_id == game_session_id)
+            .all()
+        )
+        return results
 
     # ---------------------------
     # Работа с вопросами (Question)
