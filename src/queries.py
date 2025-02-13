@@ -76,7 +76,7 @@ class DatabaseConnector:
     # ---------------------------
     def create_or_update_result(self, player_id: str, game_session_id: str, score: int) -> Result:
         result = self.session.query(Result).filter(
-            Result.user_id == player_id,
+            Result.player_id == player_id,
             Result.game_session_id == game_session_id,
         ).first()
         if result:
@@ -84,7 +84,7 @@ class DatabaseConnector:
         else:
             result = Result(
                 id=str(uuid4()),
-                user_id=player_id,
+                player_id=player_id,
                 game_session_id=game_session_id,
                 score=score,
             )
@@ -94,7 +94,7 @@ class DatabaseConnector:
 
     def increase_result_score(self, player_id: str, game_session_id: str, increment: int = 1) -> Result:
         result = self.session.query(Result).filter(
-            Result.user_id == player_id,
+            Result.player_id == player_id,
             Result.game_session_id == game_session_id,
         ).first()
         if result:
@@ -102,7 +102,7 @@ class DatabaseConnector:
         else:
             result = Result(
                 id=str(uuid4()),
-                user_id=player_id,
+                player_id=player_id,
                 game_session_id=game_session_id,
                 score=increment,
             )
@@ -222,6 +222,9 @@ class DatabaseConnector:
     def get_answers_by_question(self, question_id: str):
         return self.session.query(Answer).filter(Answer.question_id == question_id).all()
 
+    def get_answers_by_user(self, user_id: str):
+        return self.session.query(Answer).filter(Answer.player_id == user_id).all()
+
     # ---------------------------
     # Работа с медиа (Media)
     # ---------------------------
@@ -272,7 +275,8 @@ class DatabaseConnector:
         return self.session.query(Player).filter(Player.game_session_id == game_session_id).all()
 
     def get_game_session_by_code(self, code: str) -> GameSession:
-        return self.session.query(GameSession).filter(GameSession.game_code == code).first()
+        return self.session.query(GameSession).filter(GameSession.game_code == code).all()[-1]
+        # return self.session.query(GameSession).filter(GameSession.game_code == code).first()
 
     def get_game_session(self, game_session_id: str) -> GameSession:
         return self.session.query(GameSession).filter(GameSession.id == game_session_id).first()

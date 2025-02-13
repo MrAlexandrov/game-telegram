@@ -4,6 +4,7 @@ from sqlalchemy import (
     Column, String, Text, Boolean, Integer, ForeignKey
 )
 from sqlalchemy.orm import relationship, declarative_base
+# from sqlalchemy.schema import UniqueConstraint
 
 Base = declarative_base()
 
@@ -82,7 +83,7 @@ class Question(Base):
     media = relationship("Media", back_populates="question", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<Question(id='{self.id}', text='{self.question_text[:30]}...')>"
+        return f"<Question(id='{self.id}', text='{self.question_text}')>"
 
 # Таблица вариантов ответа
 class Variant(Base):
@@ -96,7 +97,7 @@ class Variant(Base):
     answer = relationship("Answer", back_populates="variant", cascade="all, delete-orphan")
     
     def __repr__(self):
-        return f"<Variant(id='{self.id}', answer_text='{self.answer_text[:20]}...')>"
+        return f"<Variant(id='{self.id}', answer_text='{self.answer_text}')>"
 
 # Таблица ответов пользователей
 class Answer(Base):
@@ -104,16 +105,18 @@ class Answer(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     variant_id = Column(String, ForeignKey('variant.id'), nullable=False)
-    user_id = Column(String, ForeignKey('players.id'), nullable=False)
+    player_id = Column(String, ForeignKey('players.id'), nullable=False)
     answer_text = Column(Text, nullable=False)
     answered_at = Column(Integer, default=0)  # Можно хранить timestamp в секундах
+
+    # __table_args__ = (UniqueConstraint('player_id', 'variant_id', name='unique_user_variant'),)
 
     # Отношения
     variant = relationship("Variant", back_populates="answer")
     player = relationship("Player", back_populates="answer")
 
     def __repr__(self):
-        return f"<Answer(id='{self.id}', answer_text='{self.answer_text[:20]}...')>"
+        return f"<Answer(id='{self.id}', answer_text='{self.answer_text}')>"
 
 # Таблица медиафайлов
 class Media(Base):
@@ -138,7 +141,7 @@ class Result(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     game_session_id = Column(String, ForeignKey('game_sessions.id'), nullable=False)
-    user_id = Column(String, ForeignKey('players.id'), nullable=False)
+    player_id = Column(String, ForeignKey('players.id'), nullable=False)
     score = Column(Integer, nullable=False)
 
     # Отношения

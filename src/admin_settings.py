@@ -213,7 +213,7 @@ ADMIN_STATES = {
         BEGIN_MESSAGE:      "Ожидание всех игроков",
         ACTION:             CALLBACK,
         FORWARD_STATES:     [GAME_WORKFLOW],
-        BACKWARD_STATES:    ADMIN_OPTIONS,
+        BACKWARD_STATES:    None,
         END_MESSAGE:        None,
     },
     GAME_WORKFLOW: {
