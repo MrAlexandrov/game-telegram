@@ -44,7 +44,7 @@ class InternalUser(Base):
     games_created = relationship("Game", back_populates="created_by_user", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<InternalUser(id='{self.id}', telegram_id='{self.telegram_id}', nickname='{self.nickname}')>"
+        return f"<InternalUser(id='{self.id}', telegram_id='{self.telegram_id}', state='{self.state}', object_id='{self.object_id}')>"
 
 # Таблица игр
 class Game(Base):

@@ -171,6 +171,14 @@ class DatabaseConnector:
         self.session.commit()
         return variant
 
+    def change_variant_correctness(self, variant_id: str) -> Variant:
+        variant = self.get_variant(variant_id)
+        if variant is None:
+            raise ValueError(f"Variant with id {variant_id} not found.")
+        variant.is_correct = 1 - variant.is_correct
+        self.session.commit()
+        return variant
+
     def update_variant_text(self, variant_id: str, new_text: str) -> Variant:
         variant = self.get_variant(variant_id)
         if variant is None:

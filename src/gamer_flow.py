@@ -19,6 +19,7 @@ from gamer_constants import *
 from constants import *
 import inspect
 import time
+import random
 
 logger = get_logger(__name__)
 
@@ -84,7 +85,8 @@ class GamerFlow:
         logger.info(f"{GAMER} {gamer_id} called {inspect.currentframe().f_code.co_name}")
         query = update.callback_query
         try:
-            await query.answer("Ок")
+            answers = ["Ок", "Заебись", "Хорошо", "Пиздато", "Класс", "Ахуенно"]
+            await query.answer(random.choice(answers))
             await query.edit_message_reply_markup(reply_markup=None)
         except Exception as e:
             logger.error(f"Something went wrong, while hiding old keyboard in gamer callback")

@@ -35,9 +35,6 @@ from utils import is_valid_uuid4
 
 logger = get_logger(__name__)
 
-CHANGE_QUESTION     = "change_question"
-PAGE                = "page"
-
 class AdminFlow:
     def __init__(self, connector: DatabaseConnector):
         self.connector = connector
@@ -48,6 +45,8 @@ class AdminFlow:
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id
         logger.debug(f"{ADMIN} {user_id} called {inspect.currentframe().f_code.co_name}")
+        logger.debug(f"update: {update}")
+        logger.debug(f"context: {context}")
         # TODO: separate this
         internal_user = self.connector.get_internal_user_by_telegram_id(ROOT_ID)
         if internal_user is None:
@@ -57,10 +56,12 @@ class AdminFlow:
                 state=ADMIN_OPTIONS,
                 # object_id=user_id,
             )
-            self.connector.update_internal_user_state(user_id, ADMIN_OPTIONS, internal_user.id)
+            logger.debug(f"ADMIN_OPTIONS = {ADMIN_OPTIONS}, internal_user_id = {internal_user.id}")
+            logger.debug(f"internal_user = {internal_user}")
             logger.info(f"Создан внутренний пользователь: {internal_user}")
         else:
             logger.info(f"Внутренний пользователь для ROOT_ID {ROOT_ID} уже существует: {internal_user}")
+        self.connector.update_internal_user_state(user_id, ADMIN_OPTIONS, internal_user.id)
 
         # TODO: rewrite this, route admin to his state if user already exsist
         reply_markup = await self.generate_inline_buttons_by_state_rewrite(
@@ -83,12 +84,17 @@ class AdminFlow:
             objects: list[Game | Question | Variant],
             page: int = 0,
         ):
+        logger.debug(f"objects: {objects}")
+        logger.debug(f"paga: {page}")
         # TODO: shange to 6 or 8 after tests
         per_page = 2
         total_objects = len(objects)
+        if total_objects == 0:
+            logger.error("List is empty")
+            return
         total_pages = (total_objects + per_page - 1) // per_page # round up
 
-        start = (page - 1) * per_page
+        start = page * per_page
         end = start + per_page
         page_objects = objects[start:end]
 
@@ -98,9 +104,11 @@ class AdminFlow:
             Question: 'question_text',
             Variant: 'answer_text',
         }
-        attr_name = type_to_attr.get(type(object))
-        text = getattr(object, attr_name, None)
+        attr_name = type_to_attr.get(type(objects[0]))
         for object in page_objects:
+            text = getattr(object, attr_name, None)
+            logger.debug(f"text: {text}")
+            logger.debug(f"object.id: {object.id}")
             button = InlineKeyboardButton(
                 text,
                 callback_data=object.id,
@@ -108,51 +116,77 @@ class AdminFlow:
             buttons.append(button)
 
         keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
-
+        logger.debug(f"keyboard before navigation_buttons: {keyboard}")
         navigation_buttons = []
-        if page > 1:
+        if page > 0:
             navigation_buttons.append(InlineKeyboardButton("⬅️", callback_data=f"{PAGE}|{page - 1}"))
-        if page < total_pages:
+        if page < total_pages - 1:
             navigation_buttons.append(InlineKeyboardButton("➡️", callback_data=f"{PAGE}|{page + 1}"))
         if navigation_buttons:
             keyboard.append(navigation_buttons)
         type_to_backward_state = {
             Game: ADMIN_OPTIONS,
             Question: GAME_OPTIONS,
-            Variant: QUESTION_OPTIONS,
+            Variant: VARIANT_OPTIONS,
         }
-        callback_state = type_to_backward_state.get(type(object))
+        callback_state = type_to_backward_state.get(type(objects[0]))
         keyboard.append([InlineKeyboardButton(CANCEL_LABEL, callback_data=callback_state)])
         logger.debug(f"generated keyboard = {keyboard}")
         return InlineKeyboardMarkup(keyboard)
 
     async def generate_list_games(self, update: Update, context: ContextTypes.DEFAULT_TYPE, internal_user_id: str, page: int = 0):
         games = self.connector.get_games_by_creator_id(internal_user_id)
-        return self.generate_list_objects(update, context, games, page)
+        return await self.generate_list_objects(update, context, games, page)
 
     async def generate_list_questions(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_id: str, page: int = 0):
         questions = self.connector.get_questions_by_game(game_id)
-        return self.generate_list_objects(update, context, questions, page)
+        return await self.generate_list_objects(update, context, questions, page)
 
     async def generate_list_variants(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: str, page: int = 0):
-        variants = self.connector.get_games_by_creator_id(question_id)
-        return self.generate_list_objects(update, context, variants, page)
+        logger.debug(f"question_id: {question_id}")
+        logger.debug(f"page: {page}")
+        variants = self.connector.get_variants_by_question(question_id)
+        logger.debug(f"variants: {variants}")
+        return await self.generate_list_objects(update, context, variants, page)
+
+    async def generate_buttons_for_change_correctness(self, update: Update, context: ContextTypes, question_id: str):
+        admin_id = update.effective_chat.id
+        logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
+        question = self.connector.get_question(question_id)
+        question_text = question.question_text
+        variants = self.connector.get_variants_by_question(question_id)
+
+        self.selected_variants[question_id] = set(variant.id for variant in variants if variant.is_correct)
+
+        buttons = [
+            InlineKeyboardButton(
+                f"✅ {variant.answer_text}" if variant.id in self.selected_variants[question_id] else variant.answer_text, callback_data=f"{variant.id}",
+            )
+            for variant in variants
+        ]
+        keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
+        keyboard.append([InlineKeyboardButton(DONE_LABEL, callback_data=f"{DONE}")])
+        return InlineKeyboardMarkup(keyboard)
 
     # TODO: remove update and context from here
-    async def generate_inline_buttons_by_state_rewrite(self, update, context, state: str, object_id: str | None = None):
+    async def generate_inline_buttons_by_state_rewrite(self, update, context, state: str, object_id: str | None = None, page: int = 0):
         logger.debug(f"state = {state}, object_id = {object_id}")
         if ADMIN_STATES[state][ACTION] == LIST:
             assert(object_id != None)
             list_types = state.split("_")[0]
+            logger.debug(f"list_types: {list_types}")
             if list_types == "game":
-                return await self.generate_list_games(update, context, object_id)
+                return await self.generate_list_games(update, context, object_id, page)
             elif list_types == "question":
-                return await self.generate_list_questions(update, context, object_id)
-            elif list_types == "variants":
-                return await self.generate_list_variants(update, context, object_id)
+                return await self.generate_list_questions(update, context, object_id, page)
+            elif list_types == "variant":
+                return await self.generate_list_variants(update, context, object_id, page)
             else:
                 logger.error("object type should be game/question/variant")
                 return
+
+        if state == CHANGE_CORRECTNESS:
+            return await self.generate_buttons_for_change_correctness(update, context, object_id)
 
         keyboard = []
         if ADMIN_STATES[state][ACTION] == CALLBACK:
@@ -168,7 +202,7 @@ class AdminFlow:
                         )
                     ]
                 )
-        return InlineKeyboardMarkup(keyboard)
+        return None if len(keyboard) == 0 else InlineKeyboardMarkup(keyboard)
 
     async def get_end_message(self, state: str):
         text = None
@@ -206,6 +240,9 @@ class AdminFlow:
         reply_markup = await self.generate_inline_buttons_by_state_rewrite(update, context, state, object_id)
         logger.debug(f"text = {text}")
         logger.debug(f"reply_markup = {reply_markup}")
+        # TODO: rewrite this??
+        if state == CHANGE_CORRECTNESS:
+            text += "\nВопрос: " + self.connector.get_question(object_id).question_text
         await context.bot.send_message(
             chat_id=user_id,
             text=text,
@@ -220,123 +257,61 @@ class AdminFlow:
             object_id: str,
             data = None,
             ):
+        logger.debug(f"new_state: {state}, object_id: {object_id}")
         user_id = update.effective_user.id
         internal_user = self.connector.get_internal_user_by_telegram_id(user_id)
-        await self.send_end_message(update, context, internal_user.state)
-        # the only state, that updates with callback
-        # if state == CHANGE_CORRECTNESS:
-        #     self.change_correctness(update, context, object_id)
         internal_user.state = state
         internal_user.object_id = object_id
         self.connector.commit()
+        await self.send_end_message(update, context, internal_user.state)
         await self.send_begin_message(update, context, state, object_id)
+
+    async def handle_selection(self, update: Update, context: ContextTypes, variant_id: str):
+        variant = self.connector.change_variant_correctness(variant_id)
+        new_reply_markup = await self.generate_buttons_for_change_correctness(update, context, variant.question_id)
+        await update.callback_query.edit_message_reply_markup(reply_markup=new_reply_markup)
 
     # TODO: separate this handler, to make it more readable
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = update.effective_user.id
-        logger.info(f"{ADMIN} {user_id} called {inspect.currentframe().f_code.co_name}")
+        logger.debug(f"{ADMIN} {user_id} called {inspect.currentframe().f_code.co_name}")
         query = update.callback_query
         await query.answer("Заебись")
-        await query.edit_message_reply_markup(reply_markup=None)
         data = query.data
-        logger.info(f"{ADMIN} {user_id} calback_data = {data}")
+        logger.debug(f"{ADMIN} {user_id} calback_data = {data}")
         internal_user = self.connector.get_internal_user_by_telegram_id(user_id)
         current_state = internal_user.state
+        logger.debug(f"current_state: {current_state}")
         new_state = None
         object_id = internal_user.object_id
         # TODO: rewrite this
         if ADMIN_STATES[current_state][ACTION] == LIST:
             new_state = ADMIN_STATES[current_state][FORWARD_STATES]
             if ADMIN_STATES[current_state][FORWARD_STATES] != ADMIN_STATES[current_state][BACKWARD_STATES]:
+                if data == ADMIN_STATES[current_state][BACKWARD_STATES]:
+                    new_state = data
+                elif data.startswith(f"{PAGE}|"):
+                    new_page = int(data.split("|")[-1])
+                    new_reply_keyboard = await self.generate_inline_buttons_by_state_rewrite(update, context, current_state, object_id, new_page)
+                    await update.callback_query.edit_message_reply_markup(reply_markup=new_reply_keyboard)
+                    return
+                else:
+                    assert(is_valid_uuid4(data))
+                    object_id = data
+        elif current_state == CHANGE_CORRECTNESS:
+            if data == DONE:
+                new_state = QUESTION_OPTIONS
+            else:
                 assert(is_valid_uuid4(data))
-                object_id = data
+                await self.handle_selection(update, context, data)
+                return
         else:
             assert(not is_valid_uuid4(data))
             new_state = data
-        # TODO: add change correctness handler
+
+        await query.edit_message_reply_markup(reply_markup=None)
+        logger.debug(f"new_state: {new_state}")
         await self.handle_state(update, context, new_state, object_id)
-
-    # async def handle_listing(self, update: Update, context: ContextTypes.DEFAULT_TYPE, state: str):
-    #     admin_id = update.effective_user.id
-    #     logger.debug(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-
-    #     logger.debug(f"state = {state}")
-    #     action = state.split(":")[0]
-    #     if action == GAME_TO_EDIT:
-    #         internal_user_id = self.connector.get_internal_user_by_telegram_id(admin_id).id
-    #         return await self.game_to_edit(update, context, internal_user_id)
-    #     elif action == GAME_TO_DELETE:
-    #         internal_user_id = self.connector.get_internal_user_by_telegram_id(admin_id).id
-    #         return await self.game_to_delete(update, context, internal_user_id)
-    #     elif action == QUESTION_TO_EDIT:
-    #         game_id = state.split(":")[-1]
-    #         return await self.question_to_edit(update, context, game_id)
-    #     elif action == QUESTION_TO_DELETE:
-    #         game_id = state.split(":")[-1]
-    #         return await self.question_to_delete(update, context, game_id)
-    #     elif action == VARIANT_TO_EDIT:
-    #         question_id = state.split(":")[-1]
-    #         return await self.variant_to_edit(update, context, question_id)
-    #     elif action == VARIANT_TO_DELETE:
-    #         question_id = state.split(":")[-1]
-    #         return await self.variant_to_delete(update, context, question_id)
-    #     elif action == GAME_TO_START:
-    #         internal_user_id = self.connector.get_internal_user_by_telegram_id(admin_id).id
-    #         return await self.game_to_start(update, context, internal_user_id)
-    #     else:
-    #         logger.error("incorrect state")
-
-    # async def handle_selection(self, update: Update, context: ContextTypes.DEFAULT_TYPE, query: CallbackQuery, variant_id: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     print(f"variant_id = {variant_id}")
-    #     self.update_variant_correctness(update, context, variant_id)
-    #     # question_text = self.connector.get_question(question_id).question_text
-    #     question_id = self.connector.get_variant(variant_id).question_id
-    #     variants = self.connector.get_variants_by_question(question_id)
-
-    #     buttons = [
-    #         InlineKeyboardButton(
-    #             f"✅ {variant.answer_text}" if variant.id in self.selected_variants[question_id] else variant.answer_text, 
-    #             callback_data=f"{ADMIN}:{SELECT}|{variant.id}",
-    #         )
-    #         for variant in variants
-    #     ]
-    #     # Разбиваем кнопки на строки по 2 кнопки
-    #     keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
-    #     # Добавляем строку с кнопкой DONE_LABEL
-    #     keyboard.append([InlineKeyboardButton(DONE_LABEL, callback_data=f"{ADMIN}:{DONE}:{question_id}")])
-    #     reply_markup = InlineKeyboardMarkup(keyboard)
-    #     await query.edit_message_reply_markup(reply_markup=reply_markup)
-
-    # async def waiting_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_id: str, game_code: str, game_session_state = f"{WAITING_START}"):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-
-    #     game_session_id = self.connector.create_game_session(game_id, "ASDF", f"{WAITING_START}").id
-    #     self.connector.update_internal_user_state(admin_id, f"{ADMIN}:{WAITING_START}:{game_session_id}")
-    #     keyboard = [
-    #         [InlineKeyboardButton("Поехали", callback_data=f"{ADMIN}:{GAME_WORKFLOW}:{game_session_id}")] 
-    #     ]
-    #     reply_markup = InlineKeyboardMarkup(keyboard)
-    #     await context.bot.send_message(
-    #         chat_id=admin_id,
-    #         text="Можешь жмакнуть \"Поехали\"",
-    #         reply_markup=reply_markup,
-    #     )
-
-    # async def create_game(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-    #     """
-    #     Запускает процесс создания игры.
-    #     Обновляет состояние в базе до f"{ADMIN}:{CREATE_GAME}" и запрашивает название игры.
-    #     """
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-
-    #     query = update.callback_query
-    #     await query.answer()
-    #     await query.edit_message_text("Введите название игры:")
-    #     logger.info(f"Админ {admin_id} переведен в состояние '{ADMIN}:{CREATE_GAME}' (ожидание названия игры).")
 
     async def handle_text(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -368,109 +343,10 @@ class AdminFlow:
         query = state_to_method[current_state](object_id, text)
         if current_state == CREATE_GAME or current_state == ADD_QUESTION:
             object_id = query.id
+        if current_state == EDIT_VARIANT_TEXT:
+            object_id = query.question_id
         next_state = ADMIN_STATES[current_state][FORWARD_STATES]
         await self.handle_state(update, context, next_state, object_id)
-
-    # async def change_correctness(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     await context.bot.send_message(
-    #         chat_id=admin_id,
-    #         text="Выберите правильные ответы",
-    #     )
-    #     await self.display_question(update, context, question_id)
-    #     return
-
-    # def get_question_data_to_send_players(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: str):
-    #     admin_id = update.effective_chat.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     question = self.connector.get_question(question_id)
-    #     question_text = question.question_text
-    #     variants = self.connector.get_variants_by_question(question_id)
-
-    #     raw_variants = self.connector.get_correct_variants_by_question_id(question_id)
-    #     self.selected_variants[question_id] = set(variant.id for variant in raw_variants)
-
-    #     buttons = [
-    #         InlineKeyboardButton(
-    #             variant.answer_text, callback_data=f"{GAME_WORKFLOW}:{variant.id}",
-    #         )
-    #         for variant in variants
-    #     ]
-    #     # Разбиваем кнопки на строки по 2 кнопки
-    #     keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
-    #     # Добавляем строку с кнопкой DONE_LABEL
-    #     # keyboard.append([InlineKeyboardButton(DONE_LABEL, callback_data=f"{ADMIN}:{DONE}:{question_id}")])
-    #     reply_markup = InlineKeyboardMarkup(keyboard)
-    #     path_to_media = question.path_to_media
-    #     return question_text, reply_markup, path_to_media
-
-    # async def display_question(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: str):
-    #     admin_id = update.effective_chat.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     question = self.connector.get_question(question_id)
-    #     question_text = question.question_text
-    #     variants = self.connector.get_variants_by_question(question_id)
-
-    #     raw_variants = self.connector.get_correct_variants_by_question_id(question_id)
-    #     self.selected_variants[question_id] = set(variant.id for variant in raw_variants)
-
-    #     buttons = [
-    #         InlineKeyboardButton(
-    #             f"✅ {variant.answer_text}" if variant.id in self.selected_variants[question_id] else variant.answer_text, callback_data=f"{ADMIN}:{SELECT}|{variant.id}",
-    #         )
-    #         for variant in variants
-    #     ]
-    #     # Разбиваем кнопки на строки по 2 кнопки
-    #     keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
-    #     # Добавляем строку с кнопкой DONE_LABEL
-    #     keyboard.append([InlineKeyboardButton(DONE_LABEL, callback_data=f"{ADMIN}:{DONE}:{question_id}")])
-    #     reply_markup = InlineKeyboardMarkup(keyboard)
-    #     path_to_media = question.path_to_media
-    #     if path_to_media is None:
-    #         await context.bot.send_message(
-    #             chat_id=admin_id,
-    #             text=question_text,
-    #             reply_markup=reply_markup,
-    #         )
-    #     else:
-    #         await context.bot.send_photo(
-    #             chat_id=admin_id,
-    #             caption=question_text,
-    #             reply_markup=reply_markup,
-    #             photo=path_to_media,
-    #         )
-    #     return
-
-    # def update_variant_correctness(self, update: Update, context: ContextTypes.DEFAULT_TYPE, variant_id: str, is_correct: bool = True):
-    #     variant = self.connector.get_variant(variant_id)
-    #     self.update_variant_correctness_cached(update=update, context=context, variant_id=variant_id, question_id=variant.question_id)
-
-    # def update_variant_correctness_cached(self, update: Update, context: ContextTypes.DEFAULT_TYPE, variant_id: str, question_id: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     if question_id not in self.selected_variants:
-    #         self.selected_variants[question_id] = set()
-    #     if question_id not in self.not_selected_variants:
-    #         self.not_selected_variants[question_id] = set()
-    #     if variant_id in self.selected_variants[question_id]:
-    #         try:
-    #             self.selected_variants[question_id].remove(variant_id)
-    #         except Exception as e:
-    #             logger.error(f"Caught exception: {e}")
-    #         try:
-    #             self.not_selected_variants[question_id].add(variant_id)
-    #         except Exception as e:
-    #             logger.error(f"Caught exception: {e}")
-    #     else:
-    #         try:
-    #             self.selected_variants[question_id].add(variant_id)
-    #         except Exception as e:
-    #             logger.error(f"Caught exception: {e}")
-    #         try:
-    #             self.not_selected_variants[question_id].remove(variant_id)
-    #         except Exception as e:
-    #             logger.error(f"Caught exception: {e}")
 
     async def handle_photo(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """
@@ -515,298 +391,6 @@ class AdminFlow:
         self.connector.update_internal_user_state(admin_id, new_state)
 
         await question_options(update, context, question_id, game_id)
-
-    # async def variant_to_edit(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     variants = self.connector.get_variants_by_question(question_id)
-    #     reply_markup = self.generate_inline_buttons_for_variants(update, context, variants, 1, f"{EDIT_VARIANT_TEXT}")
-    #     return reply_markup
-
-    # async def variant_to_delete(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     variants = self.connector.get_variants_by_question(question_id)
-    #     reply_markup = self.generate_inline_buttons_for_variants(update, context, variants, 1, f"{DELETE_VARIANT}")
-    #     return reply_markup
-
-    # async def question_to_edit(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_id: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     questions = self.connector.get_questions_by_game(game_id)
-    #     reply_markup = self.generate_inline_buttons_for_questions(update, context, questions, 1, f"{QUESTION_OPTIONS}")
-    #     return reply_markup
-
-    # async def question_to_delete(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_id: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     questions = self.connector.get_questions_by_game(game_id)
-    #     reply_markup = self.generate_inline_buttons_for_questions(update, context, questions, 1, f"{DELETE_QUESTION}")
-    #     return reply_markup
-
-    # async def game_to_edit(self, update: Update, context: ContextTypes.DEFAULT_TYPE, internal_user_id: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     games = self.connector.get_games_by_creator_id(internal_user_id)
-    #     reply_markup = self.generate_inline_buttons_for_games(update, context, games, 1, f"{GAME_OPTIONS}")
-    #     return reply_markup
-
-    # async def game_to_delete(self, update: Update, context: ContextTypes.DEFAULT_TYPE, internal_user_id: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     games = self.connector.get_games_by_creator_id(internal_user_id)
-    #     reply_markup = self.generate_inline_buttons_for_games(update, context, games, 1, f"{DELETE_GAME}")
-    #     return reply_markup
-
-    # async def remove_inline_keyboards(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-    #     admin_id = update.effective_user.id
-    #     logger.debug(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     # Проходим по всем сохранённым сообщениям
-    #     for chat_id, message_ids in list(self.sent_messages.items()):
-    #         for message_id in list(message_ids):
-    #             try:
-    #                 await context.bot.edit_message_reply_markup(
-    #                     chat_id=chat_id,
-    #                     message_id=message_id,
-    #                     reply_markup=None
-    #                 )
-    #             except Exception as e:
-    #                 logger.error(f"Ошибка при редактировании сообщения {message_id} для {chat_id}: {e}")
-    #                 # Удаляем сообщение из списка, если редактирование не удалось
-    #                 message_ids.remove(message_id)
-    #         # Если для chat_id больше нет сообщений, удаляем ключ из словаря
-    #         if not message_ids:
-    #             del self.sent_messages[chat_id]
-
-    # async def finish_game(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_session_id: str):
-    #     players = self.connector.get_players_by_game_session_id(game_session_id)
-    #     player_ids = [player.telegram_id for player in players]
-    #     await self.send_message_to_everyone(update, context, player_ids, "Игра закончена!", None, None)
-
-    # async def send_message_to_everyone(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_ids: list, text: str, reply_markup, path_to_image: str | None = None):
-    #     for player in user_ids:
-    #         try:
-    #             if path_to_image:
-    #                 sent_message = await context.bot.send_photo(
-    #                     chat_id=player,
-    #                     photo=path_to_image,
-    #                     caption=text,
-    #                     reply_markup=reply_markup,
-    #                 )
-    #             else:
-    #                 sent_message = await context.bot.send_message(
-    #                     chat_id=player,
-    #                     text=text,
-    #                     reply_markup=reply_markup,
-    #                 )
-    #             # Сохраняем message_id в словаре для данного chat_id
-    #             self.sent_messages.setdefault(player, []).append(sent_message.message_id)
-    #         except Exception as e:
-    #             logger.error(f"Ошибка при отправке сообщения для {player}: {e}")
-    #     logger.debug(f"sent messages = {self.sent_messages}")
-
-    # async def send_question_to_everyone(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_session_id: str, question_number: int):
-    #     admin_id = update.effective_user.id
-    #     logger.debug(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     players = self.connector.get_players_by_game_session_id(game_session_id)
-    #     game_id = self.connector.get_game_session(game_session_id).game_id
-    #     questions = self.connector.get_questions_by_game(game_id)
-    #     logger.debug(f"questions = {questions}")
-    #     if len(questions) <= question_number:
-    #         await self.finish_game(update, context, game_session_id)
-    #         return
-    #     current_question_id = questions[question_number].id
-    #     logger.debug(f"current_question_id = {current_question_id}")
-    #     self.connector.update_game_session_state(game_session_id, current_question_id)
-    #     self.connector.update_game_session_question_id(game_session_id, current_question_id)
-    #     text, reply_markup, path_to_image = self.get_question_data_to_send_players(update, context, current_question_id)
-    #     logger.debug(f"text = {text}, reply_markup = {reply_markup}, path_to_image = {path_to_image}")
-    #     player_ids = [player.telegram_id for player in players]
-    #     await self.send_message_to_everyone(update, context, player_ids, text, reply_markup, path_to_image)
-
-    #     keyboard = [
-    #         [InlineKeyboardButton("➡️", callback_data=f"{ADMIN}:{CHANGE_QUESTION}|{question_number + 1}")]
-    #     ]
-    #     reply_markup = InlineKeyboardMarkup(keyboard)
-    #     await context.bot.send_message(
-    #         chat_id=admin_id,
-    #         text="Можешь переключать вопросы",
-    #         reply_markup=reply_markup,
-    #     )
-    #     return
-
-    # async def start_game(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_session_id: str):
-    #     admin_id = update.effective_user.id
-    #     self.connector.update_internal_user_state(admin_id, f"{ADMIN}:{GAME_WORKFLOW}:{game_session_id}")
-    #     await self.send_question_to_everyone(update, context, game_session_id, 0)
-
-    # async def game_to_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE, internal_user_id: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     games = self.connector.get_games_by_creator_id(internal_user_id)
-    #     reply_markup = self.generate_inline_buttons_for_games(update, context, games, 1, f"{WAITING_START}")
-    #     return reply_markup
-
-    # async def edit_game_by_game_id(self, update: Update, context: ContextTypes.DEFAULT_TYPE, admin_id: str, game_id: str):
-    #     new_state = f"{ADMIN}:{GAME_OPTIONS}:{game_id}"
-    #     self.connector.update_internal_user_state(admin_id, new_state)
-    #     await game_options(update, context, game_id)
-
-    # async def delete_question_by_question_id(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: str):
-    #     game_id = self.connector.get_question(question_id).game_id
-    #     new_state = f"{ADMIN}:{GAME_OPTIONS}:{game_id}"
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     self.connector.update_internal_user_state(admin_id, new_state)
-    #     await context.bot.send_message(
-    #         chat_id=admin_id,
-    #         text="Функционал удаления вопроса, пока что, замокан 🙁",
-    #     )
-    #     await game_options(update, context, game_id)
-
-    # async def delete_game_by_game_id(self, update: Update, context: ContextTypes.DEFAULT_TYPE, admin_id: str, game_id: str):
-    #     new_state = f"{ADMIN}:{ADMIN_OPTIONS}"
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     self.connector.update_internal_user_state(admin_id, new_state)
-    #     await context.bot.send_message(
-    #         chat_id=admin_id,
-    #         text="Функционал удаления игры, пока что, замокан 🙁",
-    #     )
-    #     await admin_options(update, context)
-    #     logger.info(f"Админ {admin_id} запущен в режиме '{ADMIN_OPTIONS}'.")
-
-    # async def delete_variant_by_variant_id(self, update: Update, context: ContextTypes.DEFAULT_TYPE, variant_id: str):
-    #     question_id = self.connector.get_variant(variant_id)
-    #     new_state = f"{ADMIN}:{VARIANT_OPTIONS}:{question_id}"
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called delete_variant_by_variant_id")
-    #     self.connector.delete_variant(variant_id)
-    #     await variant_options(update, context, question_id)
-
-    # def generate_inline_buttons_for_variants(self, update: Update, context: ContextTypes.DEFAULT_TYPE, variants: list[Variant], page = 1, action: str = f"{VARIANT_OPTIONS}"):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     per_page = 2
-    #     total_variants = len(variants)
-    #     total_pages = (total_variants + per_page - 1) // per_page # round up
-
-    #     start = (page - 1) * per_page
-    #     end = start + per_page
-    #     page_variants = variants[start:end]
-
-    #     buttons = []
-    #     for variant in page_variants:
-    #         # for question its title, TODO: add unify method for any object
-    #         button = InlineKeyboardButton(variant.answer_text, callback_data=f"{ADMIN}:{action}:{variant.id}")
-    #         buttons.append(button)
-
-    #     keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
-
-    #     navigation_buttons = []
-    #     if page > 1:
-    #         navigation_buttons.append(InlineKeyboardButton("⬅️", callback_data=f"{ADMIN}:{PAGE_VARIANTS}|{page - 1}"))
-    #     if page < total_pages:
-    #         navigation_buttons.append(InlineKeyboardButton("➡️", callback_data=f"{ADMIN}:{PAGE_VARIANTS}|{page + 1}"))
-    #     if navigation_buttons:
-    #         keyboard.append(navigation_buttons)
-    #     question_id = self.connector.get_internal_user_state(admin_id).split(":")[-1]
-    #     keyboard.append([InlineKeyboardButton(CANCEL_LABEL, callback_data=f"{ADMIN}:{VARIANT_OPTIONS}:{question_id}")])
-    #     logger.debug(f"generated keyboard = {keyboard}")
-    #     return InlineKeyboardMarkup(keyboard)
-
-    # def generate_inline_buttons_for_questions(self, update: Update, context: ContextTypes.DEFAULT_TYPE, questions: list[Question], page = 1, action: str = f"{QUESTION_OPTIONS}"):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     per_page = 2
-    #     total_questions = len(questions)
-    #     total_pages = (total_questions + per_page - 1) // per_page # round up
-
-    #     start = (page - 1) * per_page
-    #     end = start + per_page
-    #     page_questions = questions[start:end]
-
-    #     buttons = []
-    #     for question in page_questions:
-    #         # for question its title, TODO: add unify method for any object
-    #         button = InlineKeyboardButton(question.question_text, callback_data=f"{ADMIN}:{action}:{question.id}")
-    #         buttons.append(button)
-
-    #     keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
-
-    #     navigation_buttons = []
-    #     if page > 1:
-    #         navigation_buttons.append(InlineKeyboardButton("⬅️", callback_data=f"{ADMIN}:{PAGE_QUESTIONS}|{page - 1}"))
-    #     if page < total_pages:
-    #         navigation_buttons.append(InlineKeyboardButton("➡️", callback_data=f"{ADMIN}:{PAGE_QUESTIONS}|{page + 1}"))
-    #     if navigation_buttons:
-    #         keyboard.append(navigation_buttons)
-    #     game_id = self.connector.get_internal_user_state(admin_id).split(":")[-1]
-    #     keyboard.append([InlineKeyboardButton(CANCEL_LABEL, callback_data=f"{ADMIN}:{GAME_OPTIONS}:{game_id}")])
-    #     logger.debug(f"generated keyboard = {keyboard}")
-    #     return InlineKeyboardMarkup(keyboard)
-
-    # def generate_inline_buttons_for_games(self, update: Update, context: ContextTypes.DEFAULT_TYPE, games: list[Game], page = 1, action: str = f"{GAME_OPTIONS}"):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     per_page = 2
-    #     total_games = len(games)
-    #     total_pages = (total_games + per_page - 1) // per_page # round up
-
-    #     start = (page - 1) * per_page
-    #     end = start + per_page
-    #     page_games = games[start:end]
-
-    #     buttons = []
-    #     for game in page_games:
-    #         # for game its title, TODO: add unify method for any object
-    #         button = InlineKeyboardButton(game.title, callback_data=f"{ADMIN}:{action}:{game.id}")
-    #         buttons.append(button)
-
-    #     keyboard = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
-
-    #     navigation_buttons = []
-    #     if page > 1:
-    #         navigation_buttons.append(InlineKeyboardButton("⬅️", callback_data=f"{ADMIN}:{PAGE_GAMES}|{page - 1}"))
-    #     if page < total_pages:
-    #         navigation_buttons.append(InlineKeyboardButton("➡️", callback_data=f"{ADMIN}:{PAGE_GAMES}|{page + 1}"))
-    #     if navigation_buttons:
-    #         keyboard.append(navigation_buttons)
-    #     keyboard.append([InlineKeyboardButton(CANCEL_LABEL, callback_data=f"{ADMIN}:{ADMIN_OPTIONS}")])
-    #     logger.debug(f"generated keyboard = {keyboard}")
-    #     return InlineKeyboardMarkup(keyboard)
-
-    # async def handle_changing_page_games(self, update: Update, context: ContextTypes.DEFAULT_TYPE, admin_id: int, new_page: int, action: str):
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     internal_user_id = self.connector.get_internal_user_by_telegram_id(admin_id).id
-    #     games = self.connector.get_games_by_creator_id(internal_user_id)
-    #     reply_markup = self.generate_inline_buttons_for_games(update, context, games, new_page, action)
-    #     logger.debug(f"new reply_markup = {reply_markup}")
-    #     query = update.callback_query
-    #     await query.edit_message_reply_markup(reply_markup=reply_markup)
-    #     await query.answer()  # Обязательно вызываем query.answer(), чтобы убрать "часики" у кнопки
-
-    # async def handle_changing_page_questions(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_id: str, new_page: int, action: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     questions = self.connector.get_questions_by_game(game_id)
-    #     print(f"********************** (from handle_changing_page_questions): game_id = {game_id}")
-    #     print(f"********************** (from handle_changing_page_questions): questions = {questions}")
-    #     reply_markup = self.generate_inline_buttons_for_questions(update, context, questions, new_page, action)
-    #     logger.debug(f"new reply_markup = {reply_markup}")
-    #     query = update.callback_query
-    #     await query.edit_message_reply_markup(reply_markup=reply_markup)
-    #     await query.answer()  # Обязательно вызываем query.answer(), чтобы убрать "часики" у кнопки
-
-    # async def handle_changing_page_variants(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_id: str, new_page: int, action: str):
-    #     admin_id = update.effective_user.id
-    #     logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
-    #     variants = self.connector.get_variants_by_question(question_id)
-    #     reply_markup = self.generate_inline_buttons_for_variants(update, context, variants, new_page, action)
-    #     logger.debug(f"new reply_markup = {reply_markup}")
-    #     query = update.callback_query
-    #     await query.edit_message_reply_markup(reply_markup=reply_markup)
-    #     await query.answer()  # Обязательно вызываем query.answer(), чтобы убрать "часики" у кнопки
 
 # Глобальный объект AdminFlow; если у вас может быть несколько администраторов, лучше создавать его при /start для каждого.
 # Здесь мы инициализируем его с использованием сессии из db_connector.

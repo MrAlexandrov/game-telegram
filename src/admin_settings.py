@@ -6,6 +6,9 @@ from constants import *
 GAME_ID             = "game_id"
 QUESTION_ID         = "question_id"
 VARIANT_ID          = "variant_id"
+INTERNAL_USER_ID    = "internal_user_id"
+
+NEXT_QUESTION       = "Следующий вопрос ➡️"
 
 GAME_WORKFLOW = "game_workflow"
 
@@ -197,7 +200,7 @@ ADMIN_STATES = {
     },
     GAME_TO_START: {
         LABEL:              "Начать игру",
-        DEPENDENCIES:       None,
+        DEPENDENCIES:       INTERNAL_USER_ID,
         BEGIN_MESSAGE:      "Выберите игру, которую хотите запустить",
         ACTION:             LIST,
         FORWARD_STATES:     WAITING_START,
@@ -209,16 +212,16 @@ ADMIN_STATES = {
         DEPENDENCIES:       GAME_ID,
         BEGIN_MESSAGE:      "Ожидание всех игроков",
         ACTION:             CALLBACK,
-        FORWARD_STATES:     None,
+        FORWARD_STATES:     [GAME_WORKFLOW],
         BACKWARD_STATES:    ADMIN_OPTIONS,
         END_MESSAGE:        None,
     },
     GAME_WORKFLOW: {
-        LABEL:              "Тут игра должна идти",
+        LABEL:              "Поехали",
         DEPENDENCIES:       GAME_ID,
-        BEGIN_MESSAGE:      "Нужно куда-то прикрепить клаву",
+        BEGIN_MESSAGE:      "Можешь переключать вопросы",
         ACTION:             CALLBACK,
-        FORWARD_STATES:     None,
+        FORWARD_STATES:     [NEXT_QUESTION],
         BACKWARD_STATES:    None,
         END_MESSAGE:        None,
     },

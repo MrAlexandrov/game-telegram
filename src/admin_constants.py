@@ -58,3 +58,6 @@ CANCEL_LABEL                = "Отмена"
 
 GAME_TO_START               = "game_to_start"
 WAITING_START               = "waiting_start"
+
+CHANGE_QUESTION             = "change_question"
+PAGE                        = "page"
