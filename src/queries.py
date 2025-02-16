@@ -233,8 +233,11 @@ class DatabaseConnector:
         self.session.commit()
         return new_answer
 
-    def get_answers_by_question(self, question_id: str):
-        return self.session.query(Answer).filter(Answer.question_id == question_id).all()
+    # def get_answers_by_question(self, question_id: str):
+    #     return self.session.query(Answer).filter(Answer.question_id == question_id).all()
+
+    def get_answers_by_user(self, user_id: int):
+        return self.session.query(Answer).filter(Answer.user_id == user_id).all()
 
     # ---------------------------
     # Работа с медиа (Media)

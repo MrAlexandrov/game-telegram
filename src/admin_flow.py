@@ -32,6 +32,7 @@ from admin_options import (
 from admin_settings import *
 from inline_buttons_generator import generate_inline_buttons_by_state
 import asyncio
+from utils import generate_qr_code
 
 logger = get_logger(__name__)
 
@@ -54,6 +55,18 @@ class AdminFlow:
             logger.info(f"Создан внутренний пользователь: {internal_user}")
         else:
             logger.info(f"Внутренний пользователь для ROOT_ID {ROOT_ID} уже существует: {internal_user}")
+
+        internal_user = self.connector.get_internal_user_by_telegram_id(admin_id)
+        current_state = internal_user.state 
+        if current_state.startswith(f"{ADMIN}:{GAME_WORKFLOW}:"):
+            game_session_id = current_state.split(":")[-1]
+            game_session = self.connector.get_game_session(game_session_id)
+            if game_session is not None:
+                current_question_id = game_session.current_question_id
+                questions = self.connector.get_questions_by_game(game_session.game_id)
+                question_number = next(i for i, q in enumerate(questions) if q.id == current_question_id)
+                await self.send_question_to_everyone(update, context, game_session_id, question_number)
+                return
 
         new_state = f"{ADMIN}:{ADMIN_OPTIONS}"
         self.connector.update_internal_user_state(admin_id, new_state)
@@ -194,7 +207,8 @@ class AdminFlow:
         if next_state.startswith(f"{WAITING_START}:"):
             game_id = next_state.split(":")[-1]
             await query.edit_message_reply_markup(reply_markup=None)
-            await self.waiting_start(update, context, game_id, "ASDF")
+            await self.waiting_start(update, context, game_id, "LEXA")
+            generate_qr_code("<ссылка на бота>")
             return
 
         if current_state not in ADMIN_STATES:
@@ -422,7 +436,7 @@ class AdminFlow:
         admin_id = update.effective_user.id
         logger.info(f"{ADMIN} {admin_id} called {inspect.currentframe().f_code.co_name}")
 
-        game_session_id = self.connector.create_game_session(game_id, "ASDF", f"{WAITING_START}").id
+        game_session_id = self.connector.create_game_session(game_id, "LEXA", f"{WAITING_START}").id
         self.connector.update_internal_user_state(admin_id, f"{ADMIN}:{WAITING_START}:{game_session_id}")
         keyboard = [
             [InlineKeyboardButton("Поехали", callback_data=f"{ADMIN}:{GAME_WORKFLOW}:{game_session_id}")] 
@@ -457,6 +471,10 @@ class AdminFlow:
         if not text:
             await update.message.reply_text("Нужно что-то ввести!")
             return
+        internal_user = self.connector.get_internal_user_by_telegram_id(admin_id)
+        self.connector.get_games_by_creator_id(internal_user.id)
+        self.connector.get_players_by_game_session_id()
+        self.send_message_to_everyone(update, context,)
         current_state = self.connector.get_internal_user_state(admin_id).split(":", 1)[1]
         action = current_state.split(":")[0]
         if ADMIN_STATES[action][ACTION] != TEXT:
@@ -816,7 +834,10 @@ class AdminFlow:
                 except Exception as e:
                     logger.error(f"Ошибка при редактировании сообщения {message_id} для {chat_id}: {e}")
                     # Удаляем сообщение из списка, если редактирование не удалось
-                    message_ids.remove(message_id)
+                    try:
+                        message_ids.remove(message_id)
+                    except Exception as e1:
+                        logger.error(f"Cant remove message: {message_id}")
             # Если для chat_id больше нет сообщений, удаляем ключ из словаря
             if not message_ids:
                 del self.sent_messages[chat_id]
@@ -846,27 +867,56 @@ class AdminFlow:
             reply_markup=reply_markup,
         )
 
-    async def send_message_to_everyone(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_ids: list, text: str, reply_markup, path_to_image: str | None = None):
+    async def send_message_to_everyone(self, update, context, user_ids, text, reply_markup, path_to_image=None):
+        max_retries = 5
+        retry_delay = 0.5
         for player in user_ids:
-            try:
-                if path_to_image:
-                    sent_message = await context.bot.send_photo(
-                        chat_id=player,
-                        photo=path_to_image,
-                        caption=text,
-                        reply_markup=reply_markup,
-                    )
-                else:
-                    sent_message = await context.bot.send_message(
-                        chat_id=player,
-                        text=text,
-                        reply_markup=reply_markup,
-                    )
-                # Сохраняем message_id в словаре для данного chat_id
-                self.sent_messages.setdefault(player, []).append(sent_message.message_id)
-            except Exception as e:
-                logger.error(f"Ошибка при отправке сообщения для {player}: {e}")
+            attempts = 0
+            while attempts < max_retries:
+                try:
+                    if path_to_image:
+                        sent_message = await context.bot.send_photo(
+                            chat_id=player,
+                            photo=path_to_image,
+                            caption=text,
+                            reply_markup=reply_markup,
+                        )
+                    else:
+                        sent_message = await context.bot.send_message(
+                            chat_id=player,
+                            text=text,
+                            reply_markup=reply_markup,
+                        )
+
+                    # Сохраняем message_id в словаре для данного chat_id
+                    self.sent_messages.setdefault(player, []).append(sent_message.message_id)
+                    break  # Если отправка успешна, выходим из цикла
+                except Exception as e:
+                    attempts += 1
+                    logger.error(f"Ошибка при отправке сообщения {player} (попытка {attempts}/{max_retries}): {e}")
+                    if attempts < max_retries:
+                        await asyncio.sleep(retry_delay)  # Ждём перед повторной попыткой
+                    else:
+                        logger.error(f"Не удалось отправить сообщение {player} после {max_retries} попыток.")
+
         logger.debug(f"sent messages = {self.sent_messages}")
+
+    async def wait_and_hide_keyboards(self, update: Update, context: ContextTypes.DEFAULT_TYPE, question_number: int):
+        admin_id = update.effective_user.id
+        await asyncio.sleep(15)
+        await self.remove_inline_keyboards(update, context)
+        logger.debug(f"woke up, removed keyboards")
+
+        keyboard = [
+            [InlineKeyboardButton("➡️", callback_data=f"{ADMIN}:{CHANGE_QUESTION}|{question_number + 1}")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await context.bot.send_message(
+            chat_id=admin_id,
+            text="Можешь переключать вопросы",
+            reply_markup=reply_markup,
+        )
+        return
 
     async def send_question_to_everyone(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_session_id: str, question_number: int):
         admin_id = update.effective_user.id
@@ -888,20 +938,9 @@ class AdminFlow:
         await self.send_message_to_everyone(update, context, player_ids, text, reply_markup, path_to_image)
 
         logger.debug(f"going sleep")
-        await asyncio.sleep(63)
-        await self.remove_inline_keyboards(update, context)
-        logger.debug(f"woke up, removed keyboards")
-
-        keyboard = [
-            [InlineKeyboardButton("➡️", callback_data=f"{ADMIN}:{CHANGE_QUESTION}|{question_number + 1}")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await context.bot.send_message(
-            chat_id=admin_id,
-            text="Можешь переключать вопросы",
-            reply_markup=reply_markup,
-        )
-        return
+        asyncio.create_task(self.wait_and_hide_keyboards(update, context, question_number))
+        # await asyncio.sleep(3)
+        # await self.remove_inline_keyboards(update, context)
 
     async def start_game(self, update: Update, context: ContextTypes.DEFAULT_TYPE, game_session_id: str):
         admin_id = update.effective_user.id

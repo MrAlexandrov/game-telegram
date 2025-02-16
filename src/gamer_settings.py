@@ -3,15 +3,15 @@ from gamer_constants import *
 from constants import *
 
 GAMER_STATES = {
-    CODE_TO_GAME: {
-        LABEL:              "Ожидание ввода кода",
-        DEPENDENCIES:       None,
-        BEGIN_MESSAGE:      "Введи код игры \"ASDF\"",
-        ACTION:             TEXT,
-        FORWARD_STATES:     [GAMER_NICKNAME],
-        BACKWARD_STATES:    None,
-        END_MESSAGE:        None,
-    },
+    # CODE_TO_GAME: {
+    #     LABEL:              "Ожидание ввода кода",
+    #     DEPENDENCIES:       None,
+    #     BEGIN_MESSAGE:      "Введи код игры \"LEXA\"",
+    #     ACTION:             TEXT,
+    #     FORWARD_STATES:     [GAMER_NICKNAME],
+    #     BACKWARD_STATES:    None,
+    #     END_MESSAGE:        None,
+    # },
     GAMER_NICKNAME: {
         LABEL:              "Ввод никнейма",
         DEPENDENCIES:       None,

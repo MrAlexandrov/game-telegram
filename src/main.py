@@ -69,6 +69,8 @@ async def routing_callback_handler(update: Update, context):
     Вызывает соответствующий обработчик в зависимости от типа пользователя.
     """
     user_id = update.effective_user.id
+    logger.debug(f"user_id = {user_id}")
+    logger.debug(f"ADMIN_IDS = {ADMIN_IDS}")
     if update.callback_query.data.startswith("admin"):
         await admin_flow.handle_callback(update, context)
     else:

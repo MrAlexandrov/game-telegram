@@ -4,7 +4,7 @@ import qrcode
 def generate_qr_code(data):
     # Задаём путь к файлу
     directory = "qr"
-    filename = os.path.join(directory, "link.jpeg")
+    filename = os.path.join(directory, "qr.jpeg")
     
     # Создаём папку, если она не существует
     os.makedirs(directory, exist_ok=True)
