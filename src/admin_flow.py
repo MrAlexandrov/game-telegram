@@ -472,9 +472,13 @@ class AdminFlow:
             await update.message.reply_text("Нужно что-то ввести!")
             return
         internal_user = self.connector.get_internal_user_by_telegram_id(admin_id)
-        self.connector.get_games_by_creator_id(internal_user.id)
-        self.connector.get_players_by_game_session_id()
-        self.send_message_to_everyone(update, context,)
+        players = self.connector.get_all_players()
+        player_ids = [player.telegram_id for player in players]
+        await self.send_message_to_everyone(update, context, player_ids, text, None, None)
+        return
+        # self.connector.get_games_by_creator_id(internal_user.id)
+        # self.connector.get_players_by_game_session_id()
+        # self.send_message_to_everyone(update, context,)
         current_state = self.connector.get_internal_user_state(admin_id).split(":", 1)[1]
         action = current_state.split(":")[0]
         if ADMIN_STATES[action][ACTION] != TEXT:

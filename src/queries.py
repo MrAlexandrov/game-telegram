@@ -73,6 +73,9 @@ class DatabaseConnector:
         self.session.commit()
         return player
 
+    def get_all_players(self) -> list[Player]:
+        return self.session.query(Player).all()
+
     # ---------------------------
     # Работа с результатами (Result)
     # ---------------------------
