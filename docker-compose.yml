@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Админский бот
+  game-bot-admin:
+    build: .
+    container_name: game-bot-admin
+    environment:
+      - MODE=admin
+    env_file:
+      - .env.admin
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./game_packs:/app/game_packs:ro
+      - admin_logs:/app/logs
+      - admin_temp:/app/temp
+    restart: unless-stopped
+    networks:
+      - game-bot-network
+
+  # Игровой бот
+  game-bot-player:
+    build: .
+    container_name: game-bot-player
+    environment:
+      - MODE=player
+    env_file:
+      - .env.player
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./game_packs:/app/game_packs:ro
+      - player_logs:/app/logs
+      - player_temp:/app/temp
+    restart: unless-stopped
+    networks:
+      - game-bot-network
+
+  # Полный бот (оба режима)
+  game-bot-full:
+    build: .
+    container_name: game-bot-full
+    environment:
+      - MODE=both
+    env_file:
+      - .env
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./game_packs:/app/game_packs:ro
+      - full_logs:/app/logs
+      - full_temp:/app/temp
+    restart: unless-stopped
+    networks:
+      - game-bot-network
+    profiles:
+      - full
+
+volumes:
+  admin_logs:
+  admin_temp:
+  player_logs:
+  player_temp:
+  full_logs:
+  full_temp:
+
+networks:
+  game-bot-network:
+    driver: bridge

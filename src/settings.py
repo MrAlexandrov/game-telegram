@@ -1,81 +1,132 @@
-from os import getenv
-from dotenv import load_dotenv
-from constants import *
+"""
+Настройки приложения
+"""
+import os
+import yaml
+from pydantic import BaseSettings
+from typing import Optional, Dict, Any
 
-# Загружаем переменные окружения из файла .env
-# load_dotenv()
 
-# Получаем токен бота из переменной окружения
-BOT_TOKEN = getenv('BOT_TOKEN')
+class Settings(BaseSettings):
+    """Настройки приложения"""
+    
+    # Основные настройки из .env
+    admin_bot_token: str
+    player_bot_token: str
+    root_id: int
+    
+    # Режим работы (admin/player/both)
+    mode: str = "both"
+    
+    # Путь к конфигурационному файлу
+    config_file: str = "config.yaml"
+    
+    # Usernames ботов (опционально, для QR-кодов)
+    admin_bot_username: Optional[str] = None
+    player_bot_username: Optional[str] = None
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = False
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._config = self._load_config()
+        self._apply_config()
+    
+    def _load_config(self) -> Dict[str, Any]:
+        """Загрузка конфигурации из YAML файла"""
+        try:
+            if os.path.exists(self.config_file):
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    return yaml.safe_load(f) or {}
+            else:
+                print(f"Конфигурационный файл {self.config_file} не найден, используются значения по умолчанию")
+                return {}
+        except Exception as e:
+            print(f"Ошибка загрузки конфигурации: {e}")
+            return {}
+    
+    def _apply_config(self):
+        """Применение настроек из конфигурации"""
+        # Настройки игр
+        game_config = self._config.get("game", {})
+        self.session_code_length = game_config.get("session_code_length", 6)
+        self.max_players_per_session = game_config.get("max_players_per_session", 50)
+        self.session_timeout_minutes = game_config.get("session_timeout_minutes", 60)
+        
+        # Пути
+        paths_config = self._config.get("paths", {})
+        self.game_packs_dir = paths_config.get("game_packs_dir", "./game_packs")
+        self.temp_dir = paths_config.get("temp_dir", "./temp")
+        self.qr_codes_dir = paths_config.get("qr_codes_dir", "./temp/qr_codes")
+        self.logs_dir = paths_config.get("logs_dir", "./logs")
+        
+        # Логирование
+        logging_config = self._config.get("logging", {})
+        self.log_level = logging_config.get("level", "INFO")
+        self.log_file = logging_config.get("file", "./logs/bot.log")
+        self.log_format = logging_config.get("format", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        self.log_max_file_size_mb = logging_config.get("max_file_size_mb", 10)
+        self.log_backup_count = logging_config.get("backup_count", 5)
+        
+        # Окружение
+        self.environment = self._config.get("environment", "production")
+        
+        # Настройки очистки
+        cleanup_config = self._config.get("cleanup", {})
+        self.qr_codes_max_age_hours = cleanup_config.get("qr_codes_max_age_hours", 24)
+        self.finished_sessions_max_age_hours = cleanup_config.get("finished_sessions_max_age_hours", 24)
+        self.cleanup_interval_minutes = cleanup_config.get("cleanup_interval_minutes", 5)
+        
+        # Настройки безопасности
+        security_config = self._config.get("security", {})
+        self.rate_limit_requests_per_minute = security_config.get("rate_limit_requests_per_minute", 30)
+        self.max_session_duration_hours = security_config.get("max_session_duration_hours", 4)
+        
+        # Настройки уведомлений
+        notifications_config = self._config.get("notifications", {})
+        self.send_game_start_notifications = notifications_config.get("send_game_start_notifications", True)
+        self.send_game_end_notifications = notifications_config.get("send_game_end_notifications", True)
+        self.send_player_join_notifications = notifications_config.get("send_player_join_notifications", False)
+        
+        # Настройки игр по умолчанию
+        self.game_defaults = self._config.get("game_defaults", {})
+    
+    def get_game_defaults(self, game_type: str) -> Dict[str, Any]:
+        """Получение настроек по умолчанию для типа игры"""
+        return self.game_defaults.get(game_type, {})
+    
+    def is_admin_mode(self) -> bool:
+        """Проверка, работает ли в режиме администратора"""
+        return self.mode in ["admin", "both"]
+    
+    def is_player_mode(self) -> bool:
+        """Проверка, работает ли в режиме игрока"""
+        return self.mode in ["player", "both"]
 
-# BOT_TOKEN = getenv('RELEASE_BOT_TOKEN')
-ROOT_ID = int(getenv('ROOT_ID'))
 
-if BOT_TOKEN is None:
-    raise ValueError("Токен не найден! Убедитесь, что файл .env правильно настроен.")
+# Глобальный экземпляр настроек
+settings = Settings()
 
-try:
-    ROOT_ID = int(ROOT_ID)
-except (TypeError, ValueError):
-    raise ValueError("ROOT_ID не найден или указан неверно")
 
-ADMIN_IDS = {
-    ROOT_ID,
-}
+def ensure_directories():
+    """Создание необходимых директорий"""
+    directories = [
+        settings.game_packs_dir,
+        settings.temp_dir,
+        settings.qr_codes_dir,
+        settings.logs_dir,
+        f"{settings.game_packs_dir}/quiz",
+        f"{settings.game_packs_dir}/hundred_to_one"
+    ]
+    
+    for directory in directories:
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
 
-BEGINING = [
-    {
-        STATE:                  USERNAME,
-        LABEL:                  "Имя пользователя",
-        MESSAGE:                "Должно собраться автоматически",
-    },
-    {
-        STATE:                  NICKNAME,
-        LABEL:                  "Никнейм",
-        MESSAGE:                "Введи имя пользователя",
-    }
-]
 
-QUIZ = [
-    {
-        MESSAGE:                """Тебе 10 лет?""",
-        OPTIONS:                YES_NO,
-    },
-    {
-        MESSAGE:                """Тебе 5 лет?""",
-        OPTIONS:                YES_NO,
-    },
-]
-
-ADMIN_STATES = {
-    START_GAME: {
-        BUTTONS: [
-            ["Начать игру"],
-        ],
-    },
-    BLOCK_BUTTONS: {
-        BUTTONS: [
-            ["Заблокировать кнопки"],
-        ],
-    },
-    SHOW_ANSWERS: {
-        BUTTONS: [
-            ["Показать ответы"],
-        ],
-    },
-    CHANGE_STATE: {
-        BUTTONS: [
-            ["Предыдущий вопрос", "Следующий вопрос"],
-        ],
-    },
-    BREAK: {
-        BUTTONS: [
-            ["Закончить перекур"],
-        ],
-    },
-    RESULTS: {
-        BUTTONS: [
-            ["Вернуться"],
-        ],
-    },
-}
+def load_settings_for_mode(mode: str) -> Settings:
+    """Загрузка настроек для конкретного режима"""
+    os.environ["MODE"] = mode
+    return Settings()

@@ -1,94 +1,167 @@
-# main.py
 """
-Основной файл приложения.
-База данных инициализируется до запуска бота, затем в bot_data сохраняется SQLAlchemy-сессия.
-При вызове команды /start происходит разделение логики: если пользователь администратор,
-вызывается admin_start() из модуля admin_flow.py, иначе – gamer_start() из модуля gamer_flow.py.
+Главный файл приложения - точка входа
 """
-
+import asyncio
 import logging
-from telegram import (
-    Update
-)
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    CallbackQueryHandler,
-    filters,
-)
-from logger import get_logger
-from settings import BOT_TOKEN, ADMIN_IDS
-from admin_flow import admin_flow
-from gamer_flow import gamer_flow
+import signal
+import sys
+from datetime import datetime
 
-logger = get_logger(__name__)
-
-async def routing_start_command(update: Update, context):
-    """
-    Обрабатывает команду /start.
-    Если пользователь администратор – вызывается admin_start() из модуля admin_flow.py,
-    иначе – gamer_start() из модуля gamer_flow.py.
-    """
-    user_id = update.effective_user.id
-    logger.debug(f"user_id = {user_id}")
-    logger.debug(f"ADMIN_IDS = {ADMIN_IDS}")
-    if user_id in ADMIN_IDS:
-        await admin_flow.start(update, context)
-    else:
-        await gamer_flow.start(update, context)
+from src.settings import settings, ensure_directories
+from src.core.bot import BotManager
 
 
-async def routing_message_handler(update: Update, context):
-    """Маршрутизатор для текстовых сообщений.
-    Направляет сообщение в админский или геймерский обработчик в зависимости от Telegram ID.
-    """
-    user_id = update.effective_user.id
-    logger.debug(f"user_id = {user_id}")
-    logger.debug(f"ADMIN_IDS = {ADMIN_IDS}")
-    if user_id in ADMIN_IDS:
-        await admin_flow.handle_text(update, context)
-    else:
-        await gamer_flow.handle_text(update, context)
+def setup_logging():
+    """Настройка системы логирования"""
+    # Создаем директорию для логов
+    import os
+    log_dir = os.path.dirname(settings.log_file)
+    if log_dir:
+        os.makedirs(log_dir, exist_ok=True)
+    
+    # Настройка форматирования
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    # Настройка обработчиков
+    handlers = []
+    
+    # Консольный обработчик
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    handlers.append(console_handler)
+    
+    # Файловый обработчик
+    if settings.log_file:
+        file_handler = logging.FileHandler(settings.log_file, encoding='utf-8')
+        file_handler.setFormatter(formatter)
+        handlers.append(file_handler)
+    
+    # Настройка корневого логгера
+    logging.basicConfig(
+        level=getattr(logging, settings.log_level.upper()),
+        handlers=handlers,
+        force=True
+    )
+    
+    # Настройка логгеров библиотек
+    logging.getLogger('httpx').setLevel(logging.WARNING)
+    logging.getLogger('telegram').setLevel(logging.INFO)
 
 
-async def routing_photo_handler(update: Update, context):
-    """Маршрутизатор для картинок.
-    Направляет сообщение в админский или геймерский обработчик в зависимости от Telegram ID.
-    """
-    user_id = update.effective_user.id
-    logger.debug(f"user_id = {user_id}")
-    logger.debug(f"ADMIN_IDS = {ADMIN_IDS}")
-    if user_id in ADMIN_IDS:
-        await admin_flow.handle_photo(update, context)
-    # else:
-    #     await gamer_flow.handle_photo(update, context)
+async def main():
+    """Главная функция приложения"""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info("🚀 Запуск телеграм-бота для игр")
+        logger.info(f"Версия Python: {sys.version}")
+        logger.info(f"Окружение: {settings.environment}")
+        
+        # Создаем необходимые директории
+        ensure_directories()
+        logger.info("📁 Директории созданы")
+        
+        # Создаем и инициализируем менеджер ботов
+        bot_manager = BotManager()
+        await bot_manager.initialize()
+        logger.info("🤖 Боты инициализированы")
+        
+        # Настройка обработки сигналов для graceful shutdown
+        def signal_handler(signum, frame):
+            logger.info(f"Получен сигнал {signum}, завершение работы...")
+            asyncio.create_task(shutdown(bot_manager))
+        
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+        
+        # Запускаем ботов
+        await bot_manager.start()
+        logger.info("✅ Боты запущены и готовы к работе")
+        
+        # Выводим информацию о конфигурации
+        logger.info(f"👑 Администратор: {settings.root_id}")
+        logger.info(f"📊 Максимум игроков в сессии: {settings.max_players_per_session}")
+        logger.info(f"⏱️ Таймаут сессии: {settings.session_timeout_minutes} минут")
+        logger.info(f"🔢 Длина кода сессии: {settings.session_code_length}")
+        
+        # Основной цикл приложения
+        try:
+            while True:
+                await asyncio.sleep(1)
+        except KeyboardInterrupt:
+            logger.info("Получен сигнал прерывания")
+        
+    except Exception as e:
+        logger.error(f"Критическая ошибка: {e}", exc_info=True)
+        sys.exit(1)
 
-async def routing_callback_handler(update: Update, context):
-    """Маршрутизатор для inline-обработчиков (callback_query).
-    Вызывает соответствующий обработчик в зависимости от типа пользователя.
-    """
-    user_id = update.effective_user.id
-    if update.callback_query.data.startswith("admin"):
-        await admin_flow.handle_callback(update, context)
-    else:
-        await gamer_flow.handle_callback(update, context)
-    # if user_id in ADMIN_IDS:
-    #     await admin_flow.handle_callback(update, context)
-    # else:
-    #     await gamer_flow.handle_callback(update, context)
 
-def main():
-    application = Application.builder().token(BOT_TOKEN).build()
+async def shutdown(bot_manager: BotManager):
+    """Graceful shutdown приложения"""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info("🛑 Начало процедуры завершения...")
+        
+        # Останавливаем ботов
+        await bot_manager.stop()
+        logger.info("🤖 Боты остановлены")
+        
+        # Останавливаем фоновые задачи
+        from src.sessions.manager import session_manager
+        await session_manager.stop_cleanup_task()
+        logger.info("🧹 Фоновые задачи остановлены")
+        
+        # Сохраняем данные
+        logger.info("💾 Сохранение данных...")
+        
+        logger.info("✅ Приложение успешно завершено")
+        
+    except Exception as e:
+        logger.error(f"Ошибка при завершении: {e}", exc_info=True)
+    
+    finally:
+        # Принудительное завершение
+        sys.exit(0)
 
-    # Регистрируем обработчики
-    application.add_handler(CommandHandler("start", routing_start_command))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, routing_message_handler))  # Для игроков
-    application.add_handler(CallbackQueryHandler(routing_callback_handler))  # Можно заменить на нужный обработчик
-    application.add_handler(MessageHandler(filters.PHOTO, routing_photo_handler))  # Можно заменить на нужный обработчик
 
-    logger.info("Bot started successfully!")
-    application.run_polling()
+def run():
+    """Функция запуска приложения"""
+    # Настройка логирования
+    setup_logging()
+    
+    logger = logging.getLogger(__name__)
+    logger.info("=" * 50)
+    logger.info("🎮 ТЕЛЕГРАМ-БОТ ДЛЯ ИГР")
+    logger.info(f"Время запуска: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info("=" * 50)
+    
+    try:
+        # Проверяем настройки
+        if not settings.admin_bot_token:
+            logger.error("❌ Не указан токен админского бота (ADMIN_BOT_TOKEN)")
+            sys.exit(1)
+        
+        if not settings.player_bot_token:
+            logger.error("❌ Не указан токен игрового бота (PLAYER_BOT_TOKEN)")
+            sys.exit(1)
+        
+        if not settings.root_id:
+            logger.error("❌ Не указан ID администратора (ROOT_ID)")
+            sys.exit(1)
+        
+        # Запускаем приложение
+        asyncio.run(main())
+        
+    except KeyboardInterrupt:
+        logger.info("👋 Приложение завершено пользователем")
+    except Exception as e:
+        logger.error(f"💥 Критическая ошибка при запуске: {e}", exc_info=True)
+        sys.exit(1)
+
 
 if __name__ == "__main__":
-    main()
+    run()

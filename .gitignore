@@ -1,5 +1,6 @@
 .pytest_cache
 .venv
+venv
 .env
 __pycache__
 *.db
@@ -7,6 +8,4 @@ __pycache__
 *.jpeg
 *.png
 dumps
-notes/*
 media
-Makefile

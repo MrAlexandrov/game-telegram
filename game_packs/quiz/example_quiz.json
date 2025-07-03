@@ -1,0 +1,100 @@
+{
+  "id": "quiz_history_russia",
+  "name": "История России",
+  "description": "Викторина по ключевым событиям российской истории",
+  "type": "quiz",
+  "author": "Администратор",
+  "difficulty": "medium",
+  "estimated_time": 10,
+  "version": "1.0",
+  "tags": ["история", "россия", "образование"],
+  "created_at": "2025-01-04T00:00:00",
+  "settings": {
+    "time_per_question": 30,
+    "show_correct_answer": true,
+    "allow_skip": false,
+    "points_per_correct": 10,
+    "penalty_for_wrong": 0,
+    "shuffle_questions": false,
+    "shuffle_options": true,
+    "show_progress": true,
+    "show_timer": true
+  },
+  "questions": [
+    {
+      "id": 1,
+      "question": "В каком году была основана Москва?",
+      "type": "multiple_choice",
+      "options": ["1147", "1156", "1174", "1185"],
+      "correct_answer": 0,
+      "explanation": "Москва была основана в 1147 году князем Юрием Долгоруким",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": 2,
+      "question": "Кто написал роман 'Война и мир'?",
+      "type": "text_input",
+      "correct_answers": ["Лев Толстой", "Толстой", "Л.Н. Толстой", "Лев Николаевич Толстой"],
+      "case_sensitive": false,
+      "points": 15,
+      "time_limit": 25,
+      "hint": "Великий русский писатель XIX века"
+    },
+    {
+      "id": 3,
+      "question": "Петр I был первым императором России",
+      "type": "true_false",
+      "correct_answer": true,
+      "explanation": "Петр I принял титул императора в 1721 году после победы в Северной войне",
+      "points": 8,
+      "time_limit": 20
+    },
+    {
+      "id": 4,
+      "question": "В каком году началась Великая Отечественная война?",
+      "type": "numeric",
+      "correct_answer": 1941,
+      "tolerance": 0,
+      "points": 12,
+      "time_limit": 25,
+      "explanation": "Великая Отечественная война началась 22 июня 1941 года"
+    },
+    {
+      "id": 5,
+      "question": "Какой город был столицей России до Петербурга?",
+      "type": "multiple_choice",
+      "options": ["Новгород", "Москва", "Киев", "Владимир"],
+      "correct_answer": 1,
+      "explanation": "Москва была столицей России до основания Санкт-Петербурга",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": 6,
+      "question": "Кто был последним российским императором?",
+      "type": "text_input",
+      "correct_answers": ["Николай II", "Николай Второй", "Николай 2"],
+      "case_sensitive": false,
+      "points": 15,
+      "explanation": "Николай II правил с 1894 по 1917 год и был последним российским императором"
+    },
+    {
+      "id": 7,
+      "question": "Куликовская битва произошла в XIV веке",
+      "type": "true_false",
+      "correct_answer": true,
+      "explanation": "Куликовская битва состоялась 8 сентября 1380 года",
+      "points": 8
+    },
+    {
+      "id": 8,
+      "question": "Сколько лет длилось татаро-монгольское иго на Руси?",
+      "type": "multiple_choice",
+      "options": ["200 лет", "240 лет", "300 лет", "350 лет"],
+      "correct_answer": 1,
+      "explanation": "Татаро-монгольское иго длилось примерно 240 лет (1240-1480)",
+      "points": 12
+    }
+  ]
+}

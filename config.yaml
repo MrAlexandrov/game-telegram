@@ -1,0 +1,60 @@
+# Конфигурация телеграм-бота для игр
+
+# Настройки игр
+game:
+  session_code_length: 6
+  max_players_per_session: 50
+  session_timeout_minutes: 60
+
+# Пути к директориям
+paths:
+  game_packs_dir: "./game_packs"
+  temp_dir: "./temp"
+  qr_codes_dir: "./temp/qr_codes"
+  logs_dir: "./logs"
+
+# Логирование
+logging:
+  level: "INFO"
+  file: "./logs/bot.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  max_file_size_mb: 10
+  backup_count: 5
+
+# Окружение
+environment: "production"
+
+# Настройки очистки
+cleanup:
+  qr_codes_max_age_hours: 24
+  finished_sessions_max_age_hours: 24
+  cleanup_interval_minutes: 5
+
+# Настройки безопасности
+security:
+  rate_limit_requests_per_minute: 30
+  max_session_duration_hours: 4
+
+# Настройки уведомлений
+notifications:
+  send_game_start_notifications: true
+  send_game_end_notifications: true
+  send_player_join_notifications: false
+
+# Настройки игр по умолчанию
+game_defaults:
+  quiz:
+    time_per_question: 30
+    show_correct_answer: true
+    allow_skip: false
+    points_per_correct: 10
+    penalty_for_wrong: 0
+    shuffle_questions: false
+    shuffle_options: true
+  
+  hundred_to_one:
+    teams_count: 2
+    rounds_count: 3
+    final_round: true
+    wrong_answers_limit: 3
+    time_per_answer: 30
