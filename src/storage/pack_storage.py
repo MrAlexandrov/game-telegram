@@ -22,7 +22,7 @@ class PackStorage:
         # Создаем директории если не существуют
         os.makedirs(self.packs_dir, exist_ok=True)
         os.makedirs(os.path.join(self.packs_dir, "quiz"), exist_ok=True)
-        os.makedirs(os.path.join(self.packs_dir, "hundred_to_one"), exist_ok=True)
+        # os.makedirs(os.path.join(self.packs_dir, "hundred_to_one"), exist_ok=True)
     
     async def save_pack(self, pack: GamePack) -> str:
         """
@@ -66,7 +66,7 @@ class PackStorage:
         """
         try:
             # Ищем файл во всех поддиректориях
-            for game_type in ["quiz", "hundred_to_one"]:
+            for game_type in ["quiz"]:
                 file_path = os.path.join(self.packs_dir, game_type, f"{pack_id}.json")
                 if os.path.exists(file_path):
                     with open(file_path, 'r', encoding='utf-8') as f:
@@ -124,7 +124,7 @@ class PackStorage:
             if game_type:
                 search_dirs = [game_type]
             else:
-                search_dirs = ["quiz", "hundred_to_one"]
+                search_dirs = ["quiz"]
             
             for dir_name in search_dirs:
                 dir_path = os.path.join(self.packs_dir, dir_name)
@@ -180,7 +180,7 @@ class PackStorage:
         """
         try:
             # Ищем файл во всех поддиректориях
-            for game_type in ["quiz", "hundred_to_one"]:
+            for game_type in ["quiz"]:
                 file_path = os.path.join(self.packs_dir, game_type, f"{pack_id}.json")
                 if os.path.exists(file_path):
                     os.remove(file_path)
@@ -204,7 +204,7 @@ class PackStorage:
         Returns:
             True если пак существует
         """
-        for game_type in ["quiz", "hundred_to_one"]:
+        for game_type in ["quiz"]:
             file_path = os.path.join(self.packs_dir, game_type, f"{pack_id}.json")
             if os.path.exists(file_path):
                 return True

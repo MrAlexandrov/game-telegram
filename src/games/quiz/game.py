@@ -7,7 +7,8 @@ from datetime import datetime
 
 from src.games.base import BaseGame
 from src.models.game import RoundData, AnswerResult, GameResults, Question
-from src.models.enums import GameStateEnum, QuestionType, GameType
+from src.models.enums import QuestionType, GameType
+from src.models.enums import GameState as GameStateEnum
 
 
 class QuizGame(BaseGame):

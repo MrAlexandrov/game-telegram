@@ -176,7 +176,7 @@ def ensure_directories():
         settings.qr_codes_dir,
         settings.logs_dir,
         f"{settings.game_packs_dir}/quiz",
-        f"{settings.game_packs_dir}/hundred_to_one"
+        # f"{settings.game_packs_dir}/hundred_to_one"
     ]
     
     for directory in directories:
