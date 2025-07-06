@@ -9,3 +9,5 @@ __pycache__
 *.png
 dumps
 media
+.env.player
+.env.admin
