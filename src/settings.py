@@ -3,7 +3,7 @@
 """
 import os
 import yaml
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 from typing import Optional, Dict, Any
 
 
@@ -130,3 +130,4 @@ def load_settings_for_mode(mode: str) -> Settings:
     """Загрузка настроек для конкретного режима"""
     os.environ["MODE"] = mode
     return Settings()
+

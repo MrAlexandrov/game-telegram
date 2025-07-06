@@ -1,5 +1,6 @@
 python-telegram-bot[ext]
 pydantic
+pydantic-settings
 python-dotenv
 qrcode[pil]
 pyyaml
