@@ -23,11 +23,11 @@ class SessionManager:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         
-        # Запускаем фоновую задачу очистки
+        # Фоновая задача очистки (будет запущена позже)
         self._cleanup_task = None
-        self._start_cleanup_task()
+        self._cleanup_started = False
     
-    async def create_session(self, pack_id: str, admin_id: int, 
+    async def create_session(self, pack_id: str, admin_id: int,
                            max_players: Optional[int] = None) -> Optional[Session]:
         """
         Создание новой игровой сессии
@@ -40,6 +40,9 @@ class SessionManager:
         Returns:
             Созданная сессия или None при ошибке
         """
+        # Запускаем задачу очистки при первом использовании
+        self._start_cleanup_task()
+        
         try:
             # Проверяем, что пользователь является администратором
             if not user_storage.is_admin(admin_id):
@@ -92,6 +95,9 @@ class SessionManager:
         Returns:
             True если игрок успешно подключился
         """
+        # Запускаем задачу очистки при первом использовании
+        self._start_cleanup_task()
+        
         try:
             # Нормализуем код
             session_code = session_code.upper().strip()
@@ -145,6 +151,9 @@ class SessionManager:
         Returns:
             True если игрок отключился
         """
+        # Запускаем задачу очистки при первом использовании
+        self._start_cleanup_task()
+        
         try:
             session = await session_storage.get_session(session_id)
             if not session:
@@ -183,6 +192,9 @@ class SessionManager:
         Returns:
             True если сессия запущена
         """
+        # Запускаем задачу очистки при первом использовании
+        self._start_cleanup_task()
+        
         try:
             session = await session_storage.get_session(session_id)
             if not session:
@@ -307,6 +319,9 @@ class SessionManager:
         Returns:
             True если сессия отменена
         """
+        # Запускаем задачу очистки при первом использовании
+        self._start_cleanup_task()
+        
         try:
             session = await session_storage.get_session(session_id)
             if not session:
@@ -348,6 +363,9 @@ class SessionManager:
         Returns:
             Информация о сессии
         """
+        # Запускаем задачу очистки при первом использовании
+        self._start_cleanup_task()
+        
         return await session_storage.get_session_info(session_id)
     
     async def get_session_by_code(self, session_code: str) -> Optional[Session]:
@@ -360,6 +378,9 @@ class SessionManager:
         Returns:
             Сессия или None
         """
+        # Запускаем задачу очистки при первом использовании
+        self._start_cleanup_task()
+        
         return await session_storage.get_session_by_code(session_code)
     
     async def generate_qr_code(self, session_code: str) -> bytes:
@@ -389,6 +410,9 @@ class SessionManager:
         Returns:
             Список сессий администратора
         """
+        # Запускаем задачу очистки при первом использовании
+        self._start_cleanup_task()
+        
         return await session_storage.get_sessions_by_admin(admin_id)
     
     async def get_player_sessions(self, player_id: int) -> List[Session]:
@@ -401,6 +425,9 @@ class SessionManager:
         Returns:
             Список сессий игрока
         """
+        # Запускаем задачу очистки при первом использовании
+        self._start_cleanup_task()
+        
         return await session_storage.get_sessions_by_player(player_id)
     
     async def get_active_sessions(self) -> List[Session]:
@@ -410,6 +437,9 @@ class SessionManager:
         Returns:
             Список активных сессий
         """
+        # Запускаем задачу очистки при первом использовании
+        self._start_cleanup_task()
+        
         return await session_storage.get_active_sessions()
     
     async def cleanup_expired_sessions(self) -> int:
@@ -459,6 +489,16 @@ class SessionManager:
     
     def _start_cleanup_task(self):
         """Запуск фоновой задачи очистки"""
+        if self._cleanup_started:
+            return
+            
+        try:
+            # Проверяем, есть ли запущенный event loop
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # Нет запущенного event loop, отложим запуск
+            return
+            
         async def cleanup_loop():
             while True:
                 try:
@@ -468,6 +508,7 @@ class SessionManager:
                     self.logger.error(f"Ошибка в фоновой задаче очистки: {e}")
         
         self._cleanup_task = asyncio.create_task(cleanup_loop())
+        self._cleanup_started = True
     
     async def stop_cleanup_task(self):
         """Остановка фоновой задачи очистки"""
