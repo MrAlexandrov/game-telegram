@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql://gameuser:gamepass@localhost:5432/gamedb"
     
     # Redis Configuration
-    REDIS_URL: str = "redis://localhost:6379"
+    REDIS_URL: str = "redis://redis:6379"
     REDIS_DB: int = 0
     REDIS_PASSWORD: str = ""
     

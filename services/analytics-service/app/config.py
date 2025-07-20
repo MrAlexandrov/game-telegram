@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     
     # Redis settings
     redis_url: Optional[str] = Field(
-        default="redis://localhost:6379/2",
+        default="redis://redis:6379/2",
         env="REDIS_URL"
     )
     

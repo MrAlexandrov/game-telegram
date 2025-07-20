@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # Redis Configuration
-    REDIS_URL: str = "redis://localhost:6379"
+    REDIS_URL: str = "redis://redis:6379"
     
     # Service URLs
     USER_MANAGER_URL: str = "http://user-manager:8000"
