@@ -12,9 +12,9 @@ httpx==0.27.0
 redis==5.0.4
 
 # Configuration
-# Updated to latest compatible versions with aiogram
-pydantic==2.7.1
-pydantic-settings==2.2.1
+# aiogram 3.4.1 requires pydantic<2.6 and >=2.4.1
+pydantic==2.5.3
+pydantic-settings==2.1.0
 
 # Logging
 # Updated to latest version
