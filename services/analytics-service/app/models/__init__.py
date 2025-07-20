@@ -2,9 +2,11 @@
 Analytics Service - Models Package
 """
 
-# Import models using absolute import to avoid circular imports
-from app.models import (
-    Base,
+# Import database components
+from .database import Base, engine, AsyncSessionLocal, get_db
+
+# Import models using relative imports to avoid circular imports
+from .analytics import (
     GameResult,
     PlayerGameResult,
     QuestionResult,
@@ -18,7 +20,7 @@ from app.models import (
 )
 
 __all__ = [
-    "Base",
+    "Base", "engine", "AsyncSessionLocal", "get_db",
     "GameResult",
     "PlayerGameResult",
     "QuestionResult",
@@ -30,3 +32,4 @@ __all__ = [
     "SystemMetrics",
     "LeaderboardCache"
 ]
+
