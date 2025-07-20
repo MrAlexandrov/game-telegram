@@ -21,7 +21,12 @@ from ..schemas import (
 )
 from ..services.code_generator import code_generator
 from ..services.redis_service import redis_service
-from ...shared.schemas.connection import (
+# Import from shared directory - using absolute import
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+from shared.schemas.connection import (
     ConnectionRequest, ConnectionResponse, ConnectionValidation,
     ConnectionValidationResponse, SessionInfoResponse, GameCodeCreate,
     GameCodeResponse, QRCodeRequest, QRCodeResponse, DeepLinkData,

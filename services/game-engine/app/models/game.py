@@ -49,7 +49,7 @@ class Question(Base):
     difficulty = Column(String(20), default="medium")
     points = Column(Integer, default=10)
     time_limit = Column(Integer, default=30)  # seconds
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

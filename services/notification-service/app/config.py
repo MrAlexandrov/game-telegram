@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
     
+    # CORS settings
+    ALLOWED_ORIGINS: list = ["*"]
+    
     class Config:
         env_file = ".env"
         case_sensitive = False
