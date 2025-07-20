@@ -19,7 +19,7 @@ import redis.asyncio as redis
 # Add shared modules to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'shared'))
 
-from models import Base
+from .models import Base
 from schemas import HealthCheckResponse
 from config import get_settings
 

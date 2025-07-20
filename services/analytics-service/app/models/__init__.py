@@ -2,7 +2,8 @@
 Analytics Service - Models Package
 """
 
-from ..models import (
+# Import models using absolute import to avoid circular imports
+from app.models import (
     Base,
     GameResult,
     PlayerGameResult,
@@ -19,7 +20,7 @@ from ..models import (
 __all__ = [
     "Base",
     "GameResult",
-    "PlayerGameResult", 
+    "PlayerGameResult",
     "QuestionResult",
     "PlayerStats",
     "Achievement",
