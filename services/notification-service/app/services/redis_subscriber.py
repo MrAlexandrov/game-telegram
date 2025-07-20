@@ -35,9 +35,9 @@ class RedisSubscriber:
         try:
             # Connect to Redis
             self.redis_client = redis.from_url(
-                settings.REDIS_URL,
-                db=settings.REDIS_DB,
-                password=settings.REDIS_PASSWORD if settings.REDIS_PASSWORD else None,
+                settings.redis_url,
+                db=settings.redis_db,
+                password=settings.redis_password if settings.redis_password else None,
                 decode_responses=True
             )
             

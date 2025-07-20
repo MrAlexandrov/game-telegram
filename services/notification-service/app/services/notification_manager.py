@@ -51,7 +51,7 @@ class NotificationManager:
             await self._load_admin_users()
             
             # Start delivery workers
-            for i in range(settings.NOTIFICATION_WORKERS):
+            for i in range(settings.notification_workers):
                 asyncio.create_task(self._delivery_worker(f"worker-{i}"))
             
             self.is_initialized = True

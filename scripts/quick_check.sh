@@ -58,7 +58,7 @@ if docker-compose ps | grep -q "Up"; then
     
     # Show running services
     echo "Running services:"
-    docker-compose ps --format "table {{.Name}}\t{{.State}}\t{{.Ports}}" | grep -E "(Up|running)"
+    docker-compose ps | grep -E "(Up|running)"
 else
     echo -e "${YELLOW}⚠️ Docker Compose: No services running${NC}"
     echo "Run 'docker-compose up -d' to start services"
