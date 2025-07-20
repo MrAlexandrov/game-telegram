@@ -14,7 +14,7 @@ import logging
 from urllib.parse import urlparse
 
 from pydantic import ValidationError as PydanticValidationError
-from ..schemas.game_packs import (
+from ..game_schemas.game_packs import (
     GamePack, QuizGamePack, FamilyFeudGamePack, LegacyGamePack,
     ValidationError, ValidationReport, MediaFile, MediaType,
     GameType, QuestionType, DifficultyLevel
@@ -610,3 +610,4 @@ class PackValidator:
                 summary += f"\n  ... and {len(report.warnings) - 3} more warnings"
         
         return summary
+

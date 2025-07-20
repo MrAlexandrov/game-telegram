@@ -21,7 +21,7 @@ from ..schemas import (
 )
 from ..services.code_generator import code_generator
 from ..services.redis_service import redis_service
-from ..schemas.connection import (
+from ..game_schemas.connection import (
     ConnectionRequest, ConnectionResponse, ConnectionValidation,
     ConnectionValidationResponse, SessionInfoResponse, GameCodeCreate,
     GameCodeResponse, QRCodeRequest, QRCodeResponse, DeepLinkData,
@@ -718,3 +718,4 @@ async def leave_session(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to leave session"
         )
+
