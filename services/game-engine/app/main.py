@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     
     # Initialize game modules
     module_loader = ModuleLoader()
-    await module_loader.load_modules()
+    await module_loader.load_all_modules()
     
     # Store module loader in app state
     app.state.module_loader = module_loader
