@@ -9,8 +9,10 @@ services:
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET}
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - game-network
     ports:
@@ -47,12 +49,17 @@ services:
   game-engine:
     build: ./services/game-engine
     environment:
+      - DATABASE_URL=postgresql://gameuser:gamepass@postgres:5432/gamedb
       - REDIS_URL=redis://redis:6379
       - USER_MANAGER_URL=http://user-manager:8000
       - SESSION_MANAGER_URL=http://session-manager:8000
     depends_on:
-      - redis
-      - user-manager
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      user-manager:
+        condition: service_started
     networks:
       - game-network
     ports:
@@ -65,9 +72,12 @@ services:
       - DATABASE_URL=postgresql://gameuser:gamepass@postgres:5432/gamedb
       - USER_MANAGER_URL=http://user-manager:8000
     depends_on:
-      - postgres
-      - redis
-      - user-manager
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      user-manager:
+        condition: service_started
     networks:
       - game-network
     ports:
@@ -96,8 +106,10 @@ services:
     volumes:
       - media-storage:/app/media
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - game-network
     ports:
@@ -117,6 +129,12 @@ services:
       - game-network
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gameuser -d gamedb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   redis:
     image: redis:7-alpine
