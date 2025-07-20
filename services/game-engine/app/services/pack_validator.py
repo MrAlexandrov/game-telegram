@@ -14,7 +14,7 @@ import logging
 from urllib.parse import urlparse
 
 from pydantic import ValidationError as PydanticValidationError
-from shared.schemas.game_packs import (
+from ..schemas.game_packs import (
     GamePack, QuizGamePack, FamilyFeudGamePack, LegacyGamePack,
     ValidationError, ValidationReport, MediaFile, MediaType,
     GameType, QuestionType, DifficultyLevel

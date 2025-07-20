@@ -21,15 +21,7 @@ from ..schemas import (
 )
 from ..services.code_generator import code_generator
 from ..services.redis_service import redis_service
-# Import from shared directory - using proper path
-import sys
-import os
-# Add the project root to Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-
-from shared.schemas.connection import (
+from ..schemas.connection import (
     ConnectionRequest, ConnectionResponse, ConnectionValidation,
     ConnectionValidationResponse, SessionInfoResponse, GameCodeCreate,
     GameCodeResponse, QRCodeRequest, QRCodeResponse, DeepLinkData,

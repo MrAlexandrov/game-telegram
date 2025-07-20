@@ -13,9 +13,6 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy shared modules first
-COPY ../../shared/ ./shared/
-
 # Copy application code
 COPY app/ ./app/
 

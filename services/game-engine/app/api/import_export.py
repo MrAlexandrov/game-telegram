@@ -13,7 +13,7 @@ import tempfile
 import os
 from pathlib import Path
 
-from shared.schemas.game_packs import (
+from ..schemas.game_packs import (
     ImportRequest, ImportResult, ExportRequest, ExportResult,
     ValidationReport, GameLibraryFilter, GameLibraryResponse
 )

@@ -15,7 +15,7 @@ import shutil
 import tempfile
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from shared.schemas.game_packs import (
+from ..schemas.game_packs import (
     ImportRequest, ImportResult, ExportRequest, ExportResult,
     ValidationReport, GamePack, QuizGamePack, FamilyFeudGamePack,
     GameLibraryEntry, GameLibraryFilter, GameLibraryResponse
