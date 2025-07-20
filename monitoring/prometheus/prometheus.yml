@@ -1,0 +1,42 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'game-engine'
+    static_configs:
+      - targets: ['game-engine:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'user-manager'
+    static_configs:
+      - targets: ['user-manager:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'session-manager'
+    static_configs:
+      - targets: ['session-manager:8003']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'analytics-service'
+    static_configs:
+      - targets: ['analytics-service:8004']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  - job_name: 'notification-service'
+    static_configs:
+      - targets: ['notification-service:8005']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
