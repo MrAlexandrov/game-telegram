@@ -79,6 +79,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - ADMIN_BOT_URL=http://admin-bot:8000
       - PLAYER_BOT_URL=http://player-bot:8000
+      - NOTIFICATION_WORKERS=3
     depends_on:
       - redis
     networks:
@@ -89,7 +90,7 @@ services:
   analytics-service:
     build: ./services/analytics-service
     environment:
-      - DATABASE_URL=postgresql://gameuser:gamepass@postgres:5432/gamedb
+      - DATABASE_URL=postgresql+asyncpg://gameuser:gamepass@postgres:5432/gamedb
       - REDIS_URL=redis://redis:6379
       - STORAGE_PATH=/app/media
     volumes:
