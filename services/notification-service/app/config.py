@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     
     # Notification settings
     notification_channels: list = ["telegram", "email", "push"]
+    notification_workers: int = 2
     max_retry_attempts: int = 3
     retry_delay: int = 5  # seconds
     
@@ -48,3 +49,4 @@ class Settings(BaseSettings):
 
 # Global settings instance
 settings = Settings()
+
