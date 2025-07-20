@@ -1,0 +1,362 @@
+{
+  "type": "family_feud",
+  "metadata": {
+    "title": "100 к одному - Семейные темы",
+    "description": "Популярная игра '100 к одному' с вопросами на семейные темы. Основана на реальных опросах и статистике.",
+    "version": "2.0.0",
+    "author": "Игровая студия",
+    "game_type": "family_feud",
+    "created_at": "2024-01-20T12:00:00Z",
+    "language": "ru",
+    "category": "Развлечения",
+    "tags": ["семья", "опросы", "популярное", "статистика", "развлечения"],
+    "difficulty": "medium",
+    "estimated_duration": 30,
+    "min_players": 2,
+    "max_players": 12,
+    "age_rating": "6+"
+  },
+  "settings": {
+    "team_mode": true,
+    "max_teams": 2,
+    "rounds": 5,
+    "strikes_limit": 3,
+    "double_points_round": 4,
+    "triple_points_round": 5,
+    "time_limit": 90,
+    "answers_per_question": 6,
+    "show_correct_answer": true,
+    "allow_hints": false,
+    "shuffle_questions": false
+  },
+  "questions": [
+    {
+      "id": "ff_001",
+      "type": "survey_question",
+      "text": "Назовите самое популярное домашнее животное",
+      "answers": [
+        {
+          "text": "Кошка",
+          "points": 45,
+          "rank": 1
+        },
+        {
+          "text": "Собака", 
+          "points": 38,
+          "rank": 2
+        },
+        {
+          "text": "Рыбка",
+          "points": 8,
+          "rank": 3
+        },
+        {
+          "text": "Попугай",
+          "points": 5,
+          "rank": 4
+        },
+        {
+          "text": "Хомяк",
+          "points": 3,
+          "rank": 5
+        },
+        {
+          "text": "Черепаха",
+          "points": 1,
+          "rank": 6
+        }
+      ],
+      "points": 100,
+      "time_limit": 120,
+      "category": "Животные",
+      "difficulty": "easy"
+    },
+    {
+      "id": "ff_002",
+      "type": "survey_question", 
+      "text": "Что обычно едят на завтрак?",
+      "answers": [
+        {
+          "text": "Каша",
+          "points": 35,
+          "rank": 1
+        },
+        {
+          "text": "Яйца",
+          "points": 28,
+          "rank": 2
+        },
+        {
+          "text": "Хлеб с маслом",
+          "points": 15,
+          "rank": 3
+        },
+        {
+          "text": "Творог",
+          "points": 10,
+          "rank": 4
+        },
+        {
+          "text": "Йогурт",
+          "points": 7,
+          "rank": 5
+        },
+        {
+          "text": "Фрукты",
+          "points": 5,
+          "rank": 6
+        }
+      ],
+      "points": 100,
+      "time_limit": 120,
+      "category": "Еда",
+      "difficulty": "easy"
+    },
+    {
+      "id": "ff_003",
+      "type": "survey_question",
+      "text": "Что берут с собой на пикник?",
+      "answers": [
+        {
+          "text": "Шашлык",
+          "points": 40,
+          "rank": 1
+        },
+        {
+          "text": "Напитки",
+          "points": 25,
+          "rank": 2
+        },
+        {
+          "text": "Хлеб",
+          "points": 15,
+          "rank": 3
+        },
+        {
+          "text": "Салат",
+          "points": 10,
+          "rank": 4
+        },
+        {
+          "text": "Мангал",
+          "points": 6,
+          "rank": 5
+        },
+        {
+          "text": "Музыка",
+          "points": 4,
+          "rank": 6
+        }
+      ],
+      "points": 100,
+      "time_limit": 120,
+      "category": "Отдых",
+      "difficulty": "medium"
+    },
+    {
+      "id": "ff_004",
+      "type": "survey_question",
+      "text": "Какой подарок чаще всего дарят на день рождения?",
+      "answers": [
+        {
+          "text": "Цветы",
+          "points": 32,
+          "rank": 1
+        },
+        {
+          "text": "Деньги",
+          "points": 28,
+          "rank": 2
+        },
+        {
+          "text": "Книга",
+          "points": 18,
+          "rank": 3
+        },
+        {
+          "text": "Одежда",
+          "points": 12,
+          "rank": 4
+        },
+        {
+          "text": "Парфюм",
+          "points": 6,
+          "rank": 5
+        },
+        {
+          "text": "Украшения",
+          "points": 4,
+          "rank": 6
+        }
+      ],
+      "points": 100,
+      "time_limit": 120,
+      "category": "Подарки",
+      "difficulty": "medium"
+    },
+    {
+      "id": "ff_005",
+      "type": "survey_question",
+      "text": "Что люди чаще всего забывают дома?",
+      "answers": [
+        {
+          "text": "Ключи",
+          "points": 42,
+          "rank": 1
+        },
+        {
+          "text": "Телефон",
+          "points": 26,
+          "rank": 2
+        },
+        {
+          "text": "Кошелек",
+          "points": 16,
+          "rank": 3
+        },
+        {
+          "text": "Документы",
+          "points": 8,
+          "rank": 4
+        },
+        {
+          "text": "Очки",
+          "points": 5,
+          "rank": 5
+        },
+        {
+          "text": "Зонт",
+          "points": 3,
+          "rank": 6
+        }
+      ],
+      "points": 100,
+      "time_limit": 120,
+      "category": "Быт",
+      "difficulty": "easy"
+    },
+    {
+      "id": "ff_006",
+      "type": "survey_question",
+      "text": "Какое хобби самое популярное?",
+      "answers": [
+        {
+          "text": "Чтение",
+          "points": 30,
+          "rank": 1
+        },
+        {
+          "text": "Спорт",
+          "points": 25,
+          "rank": 2
+        },
+        {
+          "text": "Готовка",
+          "points": 20,
+          "rank": 3
+        },
+        {
+          "text": "Садоводство",
+          "points": 12,
+          "rank": 4
+        },
+        {
+          "text": "Рукоделие",
+          "points": 8,
+          "rank": 5
+        },
+        {
+          "text": "Музыка",
+          "points": 5,
+          "rank": 6
+        }
+      ],
+      "points": 100,
+      "time_limit": 120,
+      "category": "Хобби",
+      "difficulty": "medium"
+    },
+    {
+      "id": "ff_007",
+      "type": "survey_question",
+      "text": "Что покупают в первую очередь при переезде в новую квартиру?",
+      "answers": [
+        {
+          "text": "Кровать",
+          "points": 35,
+          "rank": 1
+        },
+        {
+          "text": "Холодильник",
+          "points": 28,
+          "rank": 2
+        },
+        {
+          "text": "Стиральная машина",
+          "points": 18,
+          "rank": 3
+        },
+        {
+          "text": "Плита",
+          "points": 10,
+          "rank": 4
+        },
+        {
+          "text": "Диван",
+          "points": 6,
+          "rank": 5
+        },
+        {
+          "text": "Шкаф",
+          "points": 3,
+          "rank": 6
+        }
+      ],
+      "points": 100,
+      "time_limit": 120,
+      "category": "Дом",
+      "difficulty": "medium"
+    },
+    {
+      "id": "ff_008",
+      "type": "survey_question",
+      "text": "Какая профессия самая престижная?",
+      "answers": [
+        {
+          "text": "Врач",
+          "points": 38,
+          "rank": 1
+        },
+        {
+          "text": "Учитель",
+          "points": 22,
+          "rank": 2
+        },
+        {
+          "text": "Юрист",
+          "points": 18,
+          "rank": 3
+        },
+        {
+          "text": "Инженер",
+          "points": 12,
+          "rank": 4
+        },
+        {
+          "text": "Программист",
+          "points": 7,
+          "rank": 5
+        },
+        {
+          "text": "Бизнесмен",
+          "points": 3,
+          "rank": 6
+        }
+      ],
+      "points": 100,
+      "time_limit": 120,
+      "category": "Профессии",
+      "difficulty": "hard"
+    }
+  ]
+}

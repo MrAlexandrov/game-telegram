@@ -1,0 +1,176 @@
+version: '3.8'
+
+services:
+  # Основные сервисы
+  user-manager:
+    build: ./services/user-manager
+    environment:
+      - DATABASE_URL=postgresql://gameuser:gamepass@postgres:5432/gamedb
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - game-network
+    ports:
+      - "8001:8000"
+
+  admin-bot:
+    build: ./services/admin-bot
+    environment:
+      - BOT_TOKEN=${ADMIN_BOT_TOKEN}
+      - USER_MANAGER_URL=http://user-manager:8000
+      - GAME_ENGINE_URL=http://game-engine:8000
+      - SESSION_MANAGER_URL=http://session-manager:8000
+    depends_on:
+      - user-manager
+      - game-engine
+      - session-manager
+    networks:
+      - game-network
+
+  player-bot:
+    build: ./services/player-bot
+    environment:
+      - BOT_TOKEN=${PLAYER_BOT_TOKEN}
+      - USER_MANAGER_URL=http://user-manager:8000
+      - GAME_ENGINE_URL=http://game-engine:8000
+      - SESSION_MANAGER_URL=http://session-manager:8000
+    depends_on:
+      - user-manager
+      - game-engine
+      - session-manager
+    networks:
+      - game-network
+
+  game-engine:
+    build: ./services/game-engine
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - USER_MANAGER_URL=http://user-manager:8000
+      - SESSION_MANAGER_URL=http://session-manager:8000
+    depends_on:
+      - redis
+      - user-manager
+    networks:
+      - game-network
+    ports:
+      - "8002:8000"
+
+  session-manager:
+    build: ./services/session-manager
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://gameuser:gamepass@postgres:5432/gamedb
+      - USER_MANAGER_URL=http://user-manager:8000
+    depends_on:
+      - postgres
+      - redis
+      - user-manager
+    networks:
+      - game-network
+    ports:
+      - "8003:8000"
+
+  notification-service:
+    build: ./services/notification-service
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - ADMIN_BOT_URL=http://admin-bot:8000
+      - PLAYER_BOT_URL=http://player-bot:8000
+    depends_on:
+      - redis
+    networks:
+      - game-network
+    ports:
+      - "8004:8000"
+
+  analytics-service:
+    build: ./services/analytics-service
+    environment:
+      - DATABASE_URL=postgresql://gameuser:gamepass@postgres:5432/gamedb
+      - REDIS_URL=redis://redis:6379
+      - STORAGE_PATH=/app/media
+    volumes:
+      - media-storage:/app/media
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - game-network
+    ports:
+      - "8005:8000"
+
+  # Базы данных
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=gamedb
+      - POSTGRES_USER=gameuser
+      - POSTGRES_PASSWORD=gamepass
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - game-network
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - game-network
+    ports:
+      - "6379:6379"
+
+  # Инфраструктура
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - user-manager
+      - game-engine
+      - session-manager
+    networks:
+      - game-network
+
+  # Мониторинг
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - game-network
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
+    networks:
+      - game-network
+
+volumes:
+  postgres-data:
+  redis-data:
+  media-storage:
+  grafana-data:
+
+networks:
+  game-network:
+    driver: bridge

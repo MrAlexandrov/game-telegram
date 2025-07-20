@@ -1,0 +1,85 @@
+{
+  "game_pack": {
+    "meta": {
+      "title": "100 к одному - Семья",
+      "description": "Вопросы на семейную тематику",
+      "version": "1.0.0",
+      "author": "Admin",
+      "game_type": "family_feud",
+      "created_at": "2024-01-15T10:00:00Z"
+    },
+    "config": {
+      "team_mode": true,
+      "max_teams": 2,
+      "rounds": 3,
+      "strikes_limit": 3,
+      "double_points_round": 2,
+      "triple_points_round": 3
+    },
+    "questions": [
+      {
+        "id": "ff1",
+        "order": 1,
+        "type": "survey_question",
+        "content": {
+          "text": "Назовите самое популярное домашнее животное",
+          "survey_size": 100,
+          "answers": [
+            {"text": "Кошка", "points": 45, "rank": 1},
+            {"text": "Собака", "points": 38, "rank": 2},
+            {"text": "Рыбка", "points": 8, "rank": 3},
+            {"text": "Попугай", "points": 5, "rank": 4},
+            {"text": "Хомяк", "points": 3, "rank": 5},
+            {"text": "Черепаха", "points": 1, "rank": 6}
+          ]
+        },
+        "correct_answers": ["Кошка", "Собака", "Рыбка", "Попугай", "Хомяк", "Черепаха"],
+        "points": 100,
+        "time_limit": 120,
+        "requires_validation": false
+      },
+      {
+        "id": "ff2",
+        "order": 2,
+        "type": "survey_question",
+        "content": {
+          "text": "Что обычно едят на завтрак?",
+          "survey_size": 100,
+          "answers": [
+            {"text": "Каша", "points": 35, "rank": 1},
+            {"text": "Яйца", "points": 28, "rank": 2},
+            {"text": "Хлеб с маслом", "points": 15, "rank": 3},
+            {"text": "Творог", "points": 10, "rank": 4},
+            {"text": "Йогурт", "points": 7, "rank": 5},
+            {"text": "Фрукты", "points": 5, "rank": 6}
+          ]
+        },
+        "correct_answers": ["Каша", "Яйца", "Хлеб с маслом", "Творог", "Йогурт", "Фрукты"],
+        "points": 100,
+        "time_limit": 120,
+        "requires_validation": false
+      },
+      {
+        "id": "ff3",
+        "order": 3,
+        "type": "survey_question",
+        "content": {
+          "text": "Что берут с собой на пикник?",
+          "survey_size": 100,
+          "answers": [
+            {"text": "Шашлык", "points": 40, "rank": 1},
+            {"text": "Напитки", "points": 25, "rank": 2},
+            {"text": "Хлеб", "points": 15, "rank": 3},
+            {"text": "Салат", "points": 10, "rank": 4},
+            {"text": "Мангал", "points": 6, "rank": 5},
+            {"text": "Музыка", "points": 4, "rank": 6}
+          ]
+        },
+        "correct_answers": ["Шашлык", "Напитки", "Хлеб", "Салат", "Мангал", "Музыка"],
+        "points": 100,
+        "time_limit": 120,
+        "requires_validation": false
+      }
+    ]
+  }
+}

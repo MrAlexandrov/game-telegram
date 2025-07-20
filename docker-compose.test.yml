@@ -1,0 +1,150 @@
+version: '3.8'
+
+services:
+  # Infrastructure services for testing
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d testdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - test-network
+
+  # Core services
+  game-engine:
+    build:
+      context: ./services/game-engine
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://testuser:testpassword@postgres:5432/testdb
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=test-secret-key
+      - JWT_SECRET=test-jwt-secret
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      - ./scripts:/app/scripts
+
+  session-manager:
+    build:
+      context: ./services/session-manager
+      dockerfile: Dockerfile
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - GAME_ENGINE_URL=http://game-engine:8002
+      - SECRET_KEY=test-secret-key
+      - DEBUG=true
+    depends_on:
+      redis:
+        condition: service_healthy
+      game-engine:
+        condition: service_healthy
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  user-manager:
+    build:
+      context: ./services/user-manager
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://testuser:testpassword@postgres:5432/testdb
+      - JWT_SECRET=test-jwt-secret
+      - SECRET_KEY=test-secret-key
+      - DEBUG=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  analytics-service:
+    build:
+      context: ./services/analytics-service
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://testuser:testpassword@postgres:5432/testdb
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=test-secret-key
+      - DEBUG=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=test-secret-key
+      - DEBUG=true
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_test_data:
+  redis_test_data:
+
+networks:
+  test-network:
+    driver: bridge

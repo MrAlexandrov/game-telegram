@@ -1,0 +1,291 @@
+{
+  "type": "quiz",
+  "metadata": {
+    "title": "История России - Интерактивная викторина",
+    "description": "Увлекательная викторина по истории России с изображениями, картами и интересными фактами. Охватывает период от древней Руси до современности.",
+    "version": "1.0.0",
+    "author": "Образовательная команда",
+    "game_type": "quiz",
+    "created_at": "2024-01-20T10:00:00Z",
+    "language": "ru",
+    "category": "История",
+    "tags": ["история", "россия", "образование", "культура", "даты"],
+    "difficulty": "medium",
+    "estimated_duration": 25,
+    "min_players": 1,
+    "max_players": 50,
+    "age_rating": "12+"
+  },
+  "settings": {
+    "time_limit": 45,
+    "show_correct_answer": true,
+    "show_explanations": true,
+    "shuffle_questions": true,
+    "shuffle_options": true,
+    "allow_hints": true,
+    "time_bonus_enabled": true,
+    "difficulty_scaling": true,
+    "max_attempts": 1
+  },
+  "questions": [
+    {
+      "id": "hist_001",
+      "type": "multiple_choice",
+      "text": "В каком году было крещение Руси князем Владимиром?",
+      "options": [
+        {
+          "id": "a",
+          "text": "988 год",
+          "is_correct": true,
+          "explanation": "Крещение Руси произошло в 988 году при князе Владимире I"
+        },
+        {
+          "id": "b", 
+          "text": "980 год",
+          "is_correct": false,
+          "explanation": "В 980 году Владимир только пришел к власти"
+        },
+        {
+          "id": "c",
+          "text": "1000 год",
+          "is_correct": false,
+          "explanation": "К 1000 году христианство уже распространилось по Руси"
+        },
+        {
+          "id": "d",
+          "text": "1015 год",
+          "is_correct": false,
+          "explanation": "В 1015 году Владимир уже умер"
+        }
+      ],
+      "correct_answers": ["988 год"],
+      "points": 15,
+      "time_limit": 30,
+      "difficulty": "medium",
+      "explanation": "Крещение Руси в 988 году стало поворотным моментом в истории русского государства, определив его культурное и религиозное развитие на века вперед.",
+      "tags": ["древняя русь", "христианство", "владимир"],
+      "media": {
+        "type": "image",
+        "url": "/media/images/vladimir_baptism.jpg",
+        "alt_text": "Крещение князя Владимира"
+      }
+    },
+    {
+      "id": "hist_002",
+      "type": "text_input",
+      "text": "Как называлась первая русская летопись, созданная монахом Нестором?",
+      "correct_answers": [
+        "Повесть временных лет",
+        "повесть временных лет",
+        "ПВЛ",
+        "Летопись Нестора"
+      ],
+      "points": 20,
+      "time_limit": 40,
+      "difficulty": "hard",
+      "explanation": "'Повесть временных лет' - древнейшая из дошедших до нас русских летописей, созданная в начале XII века монахом Киево-Печерского монастыря Нестором.",
+      "tags": ["летописи", "нестор", "литература"],
+      "validation_rules": {
+        "case_sensitive": false,
+        "exact_match": false,
+        "allow_partial": true,
+        "similarity_threshold": 0.7
+      },
+      "hints": [
+        "Это произведение рассказывает о происхождении русского народа",
+        "Автор - монах Киево-Печерского монастыря",
+        "Название связано с течением времени"
+      ]
+    },
+    {
+      "id": "hist_003",
+      "type": "true_false",
+      "text": "Правда ли, что Иван Грозный был первым русским царем?",
+      "correct_answer": true,
+      "points": 10,
+      "time_limit": 20,
+      "difficulty": "easy",
+      "explanation": "Иван IV Грозный действительно стал первым русским царем, венчавшись на царство в 1547 году в возрасте 16 лет.",
+      "tags": ["иван грозный", "цари", "коронация"],
+      "media": {
+        "type": "image",
+        "url": "/media/images/ivan_coronation.jpg",
+        "alt_text": "Венчание Ивана Грозного на царство"
+      }
+    },
+    {
+      "id": "hist_004",
+      "type": "multiple_choice",
+      "text": "Какое событие произошло в России в 1612 году?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Освобождение Москвы от поляков",
+          "is_correct": true,
+          "explanation": "4 ноября 1612 года народное ополчение освободило Москву"
+        },
+        {
+          "id": "b",
+          "text": "Начало правления Романовых",
+          "is_correct": false,
+          "explanation": "Романовы пришли к власти в 1613 году"
+        },
+        {
+          "id": "c",
+          "text": "Смерть Бориса Годунова",
+          "is_correct": false,
+          "explanation": "Борис Годунов умер в 1605 году"
+        },
+        {
+          "id": "d",
+          "text": "Основание Санкт-Петербурга",
+          "is_correct": false,
+          "explanation": "Санкт-Петербург был основан в 1703 году"
+        }
+      ],
+      "correct_answers": ["Освобождение Москвы от поляков"],
+      "points": 15,
+      "time_limit": 35,
+      "difficulty": "medium",
+      "explanation": "Освобождение Москвы народным ополчением под руководством Минина и Пожарского завершило Смутное время и положило начало восстановлению российской государственности.",
+      "tags": ["смутное время", "ополчение", "минин", "пожарский"],
+      "media": {
+        "type": "image",
+        "url": "/media/images/minin_pozharsky.jpg",
+        "alt_text": "Памятник Минину и Пожарскому"
+      }
+    },
+    {
+      "id": "hist_005",
+      "type": "media_question",
+      "text": "Кто изображен на этом портрете?",
+      "media_content": {
+        "media_type": "image",
+        "media_url": "/media/images/peter_the_great.jpg",
+        "description": "Портрет русского императора"
+      },
+      "correct_answers": [
+        "Петр I",
+        "Петр Первый",
+        "Петр Великий",
+        "Peter the Great"
+      ],
+      "points": 12,
+      "time_limit": 25,
+      "difficulty": "easy",
+      "explanation": "На портрете изображен Петр I Великий (1672-1725) - первый российский император, проведший масштабные реформы и основавший Санкт-Петербург.",
+      "tags": ["петр первый", "императоры", "портреты"],
+      "validation_rules": {
+        "case_sensitive": false,
+        "exact_match": false,
+        "allow_partial": true,
+        "similarity_threshold": 0.8
+      }
+    },
+    {
+      "id": "hist_006",
+      "type": "multiple_choice",
+      "text": "В каком году была отменена крепостное право в России?",
+      "options": [
+        {
+          "id": "a",
+          "text": "1861 год",
+          "is_correct": true,
+          "explanation": "19 февраля 1861 года Александр II подписал манифест об отмене крепостного права"
+        },
+        {
+          "id": "b",
+          "text": "1855 год",
+          "is_correct": false,
+          "explanation": "В 1855 году только началось правление Александра II"
+        },
+        {
+          "id": "c",
+          "text": "1870 год",
+          "is_correct": false,
+          "explanation": "К 1870 году крепостное право уже было отменено"
+        },
+        {
+          "id": "d",
+          "text": "1881 год",
+          "is_correct": false,
+          "explanation": "В 1881 году Александр II был убит народовольцами"
+        }
+      ],
+      "correct_answers": ["1861 год"],
+      "points": 15,
+      "time_limit": 30,
+      "difficulty": "medium",
+      "explanation": "Отмена крепостного права в 1861 году стала одной из важнейших реформ Александра II, освободившей миллионы крестьян от крепостной зависимости.",
+      "tags": ["крепостное право", "александр второй", "реформы"],
+      "media": {
+        "type": "image",
+        "url": "/media/images/manifesto_1861.jpg",
+        "alt_text": "Манифест об отмене крепостного права"
+      }
+    },
+    {
+      "id": "hist_007",
+      "type": "text_input",
+      "text": "Как назывался последний российский император?",
+      "correct_answers": [
+        "Николай II",
+        "Николай Второй",
+        "Николай Александрович"
+      ],
+      "points": 10,
+      "time_limit": 25,
+      "difficulty": "easy",
+      "explanation": "Николай II (1868-1918) был последним российским императором, правившим с 1894 по 1917 год. Отрекся от престола во время Февральской революции.",
+      "tags": ["николай второй", "последний император", "революция"],
+      "validation_rules": {
+        "case_sensitive": false,
+        "exact_match": false,
+        "allow_partial": true,
+        "similarity_threshold": 0.8
+      }
+    },
+    {
+      "id": "hist_008",
+      "type": "multiple_choice",
+      "text": "Какой город был столицей России с 1712 по 1918 год?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Санкт-Петербург",
+          "is_correct": true,
+          "explanation": "Санкт-Петербург был столицей Российской империи более 200 лет"
+        },
+        {
+          "id": "b",
+          "text": "Москва",
+          "is_correct": false,
+          "explanation": "Москва была столицей до Петра I и стала ею снова после революции"
+        },
+        {
+          "id": "c",
+          "text": "Киев",
+          "is_correct": false,
+          "explanation": "Киев был столицей Древнерусского государства"
+        },
+        {
+          "id": "d",
+          "text": "Новгород",
+          "is_correct": false,
+          "explanation": "Новгород никогда не был столицей всей России"
+        }
+      ],
+      "correct_answers": ["Санкт-Петербург"],
+      "points": 12,
+      "time_limit": 25,
+      "difficulty": "easy",
+      "explanation": "Санкт-Петербург, основанный Петром I в 1703 году, служил столицей Российской империи с 1712 по 1918 год, когда большевики перенесли столицу обратно в Москву.",
+      "tags": ["санкт-петербург", "столица", "петр первый"],
+      "media": {
+        "type": "image",
+        "url": "/media/images/spb_winter_palace.jpg",
+        "alt_text": "Зимний дворец в Санкт-Петербурге"
+      }
+    }
+  ]
+}

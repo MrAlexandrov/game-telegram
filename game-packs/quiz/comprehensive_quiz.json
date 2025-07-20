@@ -1,0 +1,228 @@
+{
+  "metadata": {
+    "title": "Comprehensive Quiz - All Question Types",
+    "description": "A comprehensive quiz demonstrating all supported question types with various difficulty levels",
+    "version": "2.0.0",
+    "author": "Game System",
+    "game_type": "quiz",
+    "created_at": "2024-01-20T10:00:00Z",
+    "category": "demonstration",
+    "difficulty": "medium",
+    "estimated_duration": 900,
+    "language": "ru",
+    "tags": ["comprehensive", "demo", "all-types", "educational"]
+  },
+  "config": {
+    "time_limit": 45,
+    "points_per_question": 15,
+    "shuffle_options": true,
+    "allow_partial_credit": true,
+    "case_sensitive": false,
+    "show_correct_answers": true,
+    "show_explanations": true,
+    "time_bonus_enabled": true,
+    "difficulty_scaling": true,
+    "max_attempts": 1,
+    "allow_review": false
+  },
+  "questions": [
+    {
+      "id": "mc_001",
+      "order": 1,
+      "type": "multiple_choice",
+      "text": "Какая планета является самой большой в Солнечной системе?",
+      "options": [
+        {"text": "Юпитер", "explanation": "Юпитер - газовый гигант, самая большая планета"},
+        {"text": "Сатурн", "explanation": "Сатурн - вторая по размеру планета"},
+        {"text": "Земля", "explanation": "Земля намного меньше газовых гигантов"},
+        {"text": "Марс", "explanation": "Марс меньше Земли"}
+      ],
+      "correct_answers": ["Юпитер"],
+      "points": 10,
+      "time_limit": 30,
+      "requires_validation": false,
+      "explanation": "Юпитер - самая большая планета Солнечной системы, его масса превышает массу всех остальных планет вместе взятых.",
+      "tags": ["астрономия", "планеты", "легкий"]
+    },
+    {
+      "id": "text_001",
+      "order": 2,
+      "type": "text_input",
+      "text": "Назовите столицу Франции",
+      "correct_answers": ["Париж", "париж", "Paris"],
+      "points": 10,
+      "time_limit": 20,
+      "requires_validation": false,
+      "explanation": "Париж - столица и крупнейший город Франции.",
+      "tags": ["география", "столицы", "легкий"],
+      "validation_rules": {
+        "case_sensitive": false,
+        "exact_match": false,
+        "allow_partial": true,
+        "similarity_threshold": 0.8
+      }
+    },
+    {
+      "id": "tf_001",
+      "order": 3,
+      "type": "true_false",
+      "text": "Верно ли, что кит - это рыба?",
+      "correct_answer": false,
+      "points": 8,
+      "time_limit": 15,
+      "requires_validation": false,
+      "explanation": "Киты - это млекопитающие, а не рыбы. Они дышат воздухом и кормят детенышей молоком.",
+      "tags": ["биология", "животные", "легкий"]
+    },
+    {
+      "id": "media_001",
+      "order": 4,
+      "type": "media_question",
+      "text": "Что изображено на этой картинке?",
+      "media_content": {
+        "media_type": "image",
+        "media_url": "https://example.com/images/eiffel_tower.jpg",
+        "thumbnail_url": "https://example.com/images/eiffel_tower_thumb.jpg",
+        "description": "Знаменитая башня в Париже"
+      },
+      "correct_answers": ["Эйфелева башня", "эйфелева башня", "башня эйфеля", "Eiffel Tower"],
+      "points": 15,
+      "time_limit": 45,
+      "requires_validation": false,
+      "explanation": "Эйфелева башня - символ Парижа, построена в 1889 году.",
+      "tags": ["архитектура", "париж", "средний"],
+      "validation_rules": {
+        "case_sensitive": false,
+        "exact_match": false,
+        "allow_partial": true,
+        "similarity_threshold": 0.7
+      }
+    },
+    {
+      "id": "validation_001",
+      "order": 5,
+      "type": "validation_required",
+      "text": "Опишите своими словами принцип работы двигателя внутреннего сгорания",
+      "validation_criteria": "Ответ должен содержать упоминание о сжатии топливной смеси, воспламенении и преобразовании энергии в механическую работу",
+      "points": 25,
+      "time_limit": 120,
+      "requires_validation": true,
+      "explanation": "Двигатель внутреннего сгорания работает по принципу сжатия топливной смеси, её воспламенения и преобразования энергии расширяющихся газов в механическую работу.",
+      "tags": ["техника", "двигатели", "сложный"]
+    },
+    {
+      "id": "timed_001",
+      "order": 6,
+      "type": "timed_question",
+      "text": "Сколько будет 17 × 23?",
+      "correct_answers": ["391"],
+      "points": 20,
+      "time_limit": 30,
+      "time_bonus_multiplier": 2.0,
+      "minimum_time_for_bonus": 10,
+      "requires_validation": false,
+      "explanation": "17 × 23 = 391. Быстрое решение показывает хорошие навыки устного счета.",
+      "tags": ["математика", "умножение", "средний"]
+    },
+    {
+      "id": "weighted_001",
+      "order": 7,
+      "type": "weighted_question",
+      "text": "Какой химический элемент имеет символ Au?",
+      "correct_answers": ["Золото", "золото", "Gold"],
+      "points": 15,
+      "time_limit": 25,
+      "difficulty_level": "hard",
+      "point_multipliers": {
+        "easy": 1.0,
+        "medium": 1.5,
+        "hard": 2.0,
+        "expert": 3.0
+      },
+      "requires_validation": false,
+      "explanation": "Au - это символ золота в периодической таблице, от латинского 'aurum'.",
+      "tags": ["химия", "элементы", "сложный"]
+    },
+    {
+      "id": "mc_002",
+      "order": 8,
+      "type": "multiple_choice",
+      "text": "Кто написал роман 'Война и мир'?",
+      "options": [
+        {"text": "Лев Толстой", "explanation": "Правильный ответ"},
+        {"text": "Федор Достоевский", "explanation": "Автор 'Преступления и наказания'"},
+        {"text": "Иван Тургенев", "explanation": "Автор 'Отцов и детей'"},
+        {"text": "Антон Чехов", "explanation": "Известный драматург и прозаик"}
+      ],
+      "correct_answers": ["Лев Толстой"],
+      "points": 12,
+      "time_limit": 20,
+      "requires_validation": false,
+      "explanation": "Лев Николаевич Толстой написал эпический роман 'Война и мир' в 1865-1869 годах.",
+      "tags": ["литература", "классика", "средний"]
+    },
+    {
+      "id": "text_002",
+      "order": 9,
+      "type": "text_input",
+      "text": "В каком году началась Первая мировая война?",
+      "correct_answers": ["1914", "тысяча девятьсот четырнадцатый"],
+      "points": 10,
+      "time_limit": 25,
+      "requires_validation": false,
+      "explanation": "Первая мировая война началась 28 июля 1914 года после убийства эрцгерцога Франца Фердинанда.",
+      "tags": ["история", "войны", "средний"],
+      "validation_rules": {
+        "case_sensitive": false,
+        "exact_match": true,
+        "allow_partial": false,
+        "similarity_threshold": 0.9
+      }
+    },
+    {
+      "id": "tf_002",
+      "order": 10,
+      "type": "true_false",
+      "text": "Правда ли, что скорость света в вакууме составляет примерно 300 000 км/с?",
+      "correct_answer": true,
+      "points": 12,
+      "time_limit": 20,
+      "requires_validation": false,
+      "explanation": "Скорость света в вакууме составляет точно 299 792 458 м/с, что примерно равно 300 000 км/с.",
+      "tags": ["физика", "константы", "средний"]
+    },
+    {
+      "id": "weighted_002",
+      "order": 11,
+      "type": "weighted_question",
+      "text": "Назовите автора теории относительности",
+      "correct_answers": ["Альберт Эйнштейн", "Эйнштейн", "Einstein", "Albert Einstein"],
+      "points": 18,
+      "time_limit": 30,
+      "difficulty_level": "expert",
+      "point_multipliers": {
+        "easy": 1.0,
+        "medium": 1.5,
+        "hard": 2.0,
+        "expert": 3.0
+      },
+      "requires_validation": false,
+      "explanation": "Альберт Эйнштейн разработал специальную (1905) и общую (1915) теории относительности.",
+      "tags": ["физика", "ученые", "сложный"]
+    },
+    {
+      "id": "timed_002",
+      "order": 12,
+      "type": "timed_question",
+      "text": "Как называется процесс превращения гусеницы в бабочку?",
+      "correct_answers": ["Метаморфоз", "метаморфоз", "метаморфоза", "превращение"],
+      "points": 15,
+      "time_limit": 20,
+      "time_bonus_multiplier": 1.8,
+      "minimum_time_for_bonus": 8,
+      "requires_validation": false,
+      "explanation": "Метаморфоз - это процесс превращения личинки во взрослую особь через стадию куколки.",
+      "tags": ["биология", "насекомые", "средний"]
+    }
+  ]
+}

@@ -1,0 +1,243 @@
+{
+  "id": "sample_quiz_001",
+  "title": "General Knowledge Quiz",
+  "description": "Test your knowledge across various topics including science, history, geography, and culture.",
+  "type": "quiz",
+  "category": "general",
+  "difficulty": "medium",
+  "tags": ["general", "knowledge", "mixed", "educational"],
+  "settings": {
+    "time_limit": 30,
+    "show_correct_answer": true,
+    "randomize_questions": true,
+    "randomize_options": true,
+    "allow_skip": false,
+    "scoring_type": "standard",
+    "max_players": 50
+  },
+  "questions": [
+    {
+      "id": "q001",
+      "text": "What is the capital of Australia?",
+      "type": "single_choice",
+      "options": [
+        "Sydney",
+        "Melbourne",
+        "Canberra",
+        "Perth"
+      ],
+      "correct_answer": 2,
+      "explanation": "Canberra is the capital city of Australia, located in the Australian Capital Territory.",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": "q002",
+      "text": "Which planet is known as the 'Red Planet'?",
+      "type": "single_choice",
+      "options": [
+        "Venus",
+        "Mars",
+        "Jupiter",
+        "Saturn"
+      ],
+      "correct_answer": 1,
+      "explanation": "Mars is called the 'Red Planet' due to iron oxide (rust) on its surface.",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": "q003",
+      "text": "Who painted the Mona Lisa?",
+      "type": "single_choice",
+      "options": [
+        "Vincent van Gogh",
+        "Pablo Picasso",
+        "Leonardo da Vinci",
+        "Michelangelo"
+      ],
+      "correct_answer": 2,
+      "explanation": "The Mona Lisa was painted by Leonardo da Vinci between 1503 and 1519.",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": "q004",
+      "text": "What is the largest ocean on Earth?",
+      "type": "single_choice",
+      "options": [
+        "Atlantic Ocean",
+        "Indian Ocean",
+        "Arctic Ocean",
+        "Pacific Ocean"
+      ],
+      "correct_answer": 3,
+      "explanation": "The Pacific Ocean is the largest ocean, covering about 46% of the world's water surface.",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": "q005",
+      "text": "In which year did World War II end?",
+      "type": "single_choice",
+      "options": [
+        "1944",
+        "1945",
+        "1946",
+        "1947"
+      ],
+      "correct_answer": 1,
+      "explanation": "World War II ended in 1945 with the surrender of Japan in September.",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": "q006",
+      "text": "What is the chemical symbol for gold?",
+      "type": "single_choice",
+      "options": [
+        "Go",
+        "Gd",
+        "Au",
+        "Ag"
+      ],
+      "correct_answer": 2,
+      "explanation": "Au is the chemical symbol for gold, derived from the Latin word 'aurum'.",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": "q007",
+      "text": "Which of the following is NOT a mammal?",
+      "type": "single_choice",
+      "options": [
+        "Dolphin",
+        "Bat",
+        "Penguin",
+        "Whale"
+      ],
+      "correct_answer": 2,
+      "explanation": "Penguins are birds, not mammals. They are flightless birds adapted for aquatic life.",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": "q008",
+      "text": "What is the smallest country in the world?",
+      "type": "single_choice",
+      "options": [
+        "Monaco",
+        "Vatican City",
+        "San Marino",
+        "Liechtenstein"
+      ],
+      "correct_answer": 1,
+      "explanation": "Vatican City is the smallest country in the world with an area of 0.17 square miles.",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": "q009",
+      "text": "Which element has the atomic number 1?",
+      "type": "single_choice",
+      "options": [
+        "Helium",
+        "Hydrogen",
+        "Lithium",
+        "Carbon"
+      ],
+      "correct_answer": 1,
+      "explanation": "Hydrogen has the atomic number 1, making it the lightest and most abundant element.",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": "q010",
+      "text": "The Great Wall of China was primarily built to protect against invasions from which direction?",
+      "type": "single_choice",
+      "options": [
+        "South",
+        "East",
+        "North",
+        "West"
+      ],
+      "correct_answer": 2,
+      "explanation": "The Great Wall was built to protect against invasions from the north, particularly from Mongol tribes.",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": "q011",
+      "text": "Mount Everest is located in which mountain range?",
+      "type": "single_choice",
+      "options": [
+        "Andes",
+        "Rocky Mountains",
+        "Himalayas",
+        "Alps"
+      ],
+      "correct_answer": 2,
+      "explanation": "Mount Everest is located in the Himalayas on the border between Nepal and Tibet.",
+      "points": 10,
+      "time_limit": 30
+    },
+    {
+      "id": "q012",
+      "text": "True or False: The human brain uses approximately 20% of the body's total energy.",
+      "type": "true_false",
+      "correct_answer": true,
+      "explanation": "The human brain uses about 20% of the body's total energy despite being only 2% of body weight.",
+      "points": 10,
+      "time_limit": 25
+    },
+    {
+      "id": "q013",
+      "text": "What is the currency of Japan?",
+      "type": "text_input",
+      "correct_answers": ["yen", "japanese yen"],
+      "explanation": "The Japanese Yen is the official currency of Japan.",
+      "points": 15,
+      "time_limit": 20,
+      "case_sensitive": false
+    },
+    {
+      "id": "q014",
+      "text": "Which of these are programming languages? (Select all that apply)",
+      "type": "multiple_choice",
+      "options": [
+        "Python",
+        "JavaScript",
+        "HTML",
+        "Java",
+        "CSS"
+      ],
+      "correct_answers": [0, 1, 3],
+      "explanation": "Python, JavaScript, and Java are programming languages. HTML and CSS are markup/styling languages.",
+      "points": 15,
+      "time_limit": 45
+    },
+    {
+      "id": "q015",
+      "text": "What is the largest mammal in the world?",
+      "type": "single_choice",
+      "options": [
+        "African Elephant",
+        "Blue Whale",
+        "Giraffe",
+        "Polar Bear"
+      ],
+      "correct_answer": 1,
+      "explanation": "The Blue Whale is the largest mammal and the largest animal ever known to have lived on Earth.",
+      "points": 10,
+      "time_limit": 30
+    }
+  ],
+  "metadata": {
+    "created_by": "demo_admin",
+    "created_at": "2024-01-01T12:00:00Z",
+    "version": "1.0",
+    "language": "en",
+    "estimated_duration": 450,
+    "total_points": 170
+  }
+}

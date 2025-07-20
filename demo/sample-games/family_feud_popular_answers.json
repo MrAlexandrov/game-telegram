@@ -1,0 +1,244 @@
+{
+  "id": "sample_feud_001",
+  "title": "Popular Answers Family Feud",
+  "description": "Classic Family Feud style game with survey-based questions. Guess the most popular answers!",
+  "type": "family_feud",
+  "category": "survey",
+  "difficulty": "medium",
+  "tags": ["family_feud", "survey", "popular", "fun"],
+  "settings": {
+    "rounds": 5,
+    "time_limit": 45,
+    "show_answer_count": true,
+    "allow_partial_matches": true,
+    "max_players": 20,
+    "team_mode": true,
+    "max_teams": 4,
+    "strike_limit": 3
+  },
+  "questions": [
+    {
+      "id": "ff001",
+      "text": "Name something people do when they can't sleep",
+      "survey_question": "We asked 100 people: What do you do when you can't sleep?",
+      "answers": [
+        {
+          "text": "Read a book",
+          "points": 32,
+          "rank": 1,
+          "alternatives": ["read", "reading", "book"]
+        },
+        {
+          "text": "Watch TV",
+          "points": 28,
+          "rank": 2,
+          "alternatives": ["watch television", "television", "tv", "watch movies"]
+        },
+        {
+          "text": "Count sheep",
+          "points": 18,
+          "rank": 3,
+          "alternatives": ["count", "counting sheep", "sheep"]
+        },
+        {
+          "text": "Listen to music",
+          "points": 12,
+          "rank": 4,
+          "alternatives": ["music", "listen music", "songs"]
+        },
+        {
+          "text": "Get a snack",
+          "points": 6,
+          "rank": 5,
+          "alternatives": ["eat", "snack", "food", "get food"]
+        },
+        {
+          "text": "Take a warm bath",
+          "points": 4,
+          "rank": 6,
+          "alternatives": ["bath", "shower", "warm bath", "hot bath"]
+        }
+      ]
+    },
+    {
+      "id": "ff002",
+      "text": "Name a popular pizza topping",
+      "survey_question": "We asked 100 people: What's your favorite pizza topping?",
+      "answers": [
+        {
+          "text": "Pepperoni",
+          "points": 38,
+          "rank": 1,
+          "alternatives": ["pepperoni"]
+        },
+        {
+          "text": "Cheese",
+          "points": 24,
+          "rank": 2,
+          "alternatives": ["cheese", "extra cheese", "mozzarella"]
+        },
+        {
+          "text": "Sausage",
+          "points": 16,
+          "rank": 3,
+          "alternatives": ["sausage", "italian sausage"]
+        },
+        {
+          "text": "Mushrooms",
+          "points": 10,
+          "rank": 4,
+          "alternatives": ["mushroom", "mushrooms"]
+        },
+        {
+          "text": "Peppers",
+          "points": 8,
+          "rank": 5,
+          "alternatives": ["pepper", "peppers", "bell peppers", "green peppers"]
+        },
+        {
+          "text": "Onions",
+          "points": 4,
+          "rank": 6,
+          "alternatives": ["onion", "onions", "red onions"]
+        }
+      ]
+    },
+    {
+      "id": "ff003",
+      "text": "Name something you might find in a woman's purse",
+      "survey_question": "We asked 100 people: What would you find in a woman's purse?",
+      "answers": [
+        {
+          "text": "Wallet",
+          "points": 35,
+          "rank": 1,
+          "alternatives": ["wallet", "purse", "money"]
+        },
+        {
+          "text": "Keys",
+          "points": 28,
+          "rank": 2,
+          "alternatives": ["keys", "car keys", "house keys"]
+        },
+        {
+          "text": "Phone",
+          "points": 18,
+          "rank": 3,
+          "alternatives": ["phone", "cell phone", "mobile phone", "smartphone"]
+        },
+        {
+          "text": "Lipstick",
+          "points": 12,
+          "rank": 4,
+          "alternatives": ["lipstick", "lip gloss", "makeup"]
+        },
+        {
+          "text": "Tissues",
+          "points": 5,
+          "rank": 5,
+          "alternatives": ["tissues", "kleenex", "napkins"]
+        },
+        {
+          "text": "Gum",
+          "points": 2,
+          "rank": 6,
+          "alternatives": ["gum", "chewing gum", "mints"]
+        }
+      ]
+    },
+    {
+      "id": "ff004",
+      "text": "Name a reason why someone might be late for work",
+      "survey_question": "We asked 100 people: Why might someone be late for work?",
+      "answers": [
+        {
+          "text": "Traffic",
+          "points": 42,
+          "rank": 1,
+          "alternatives": ["traffic", "traffic jam", "heavy traffic"]
+        },
+        {
+          "text": "Overslept",
+          "points": 26,
+          "rank": 2,
+          "alternatives": ["overslept", "slept in", "alarm didn't go off"]
+        },
+        {
+          "text": "Car problems",
+          "points": 15,
+          "rank": 3,
+          "alternatives": ["car trouble", "car problems", "car broke down", "flat tire"]
+        },
+        {
+          "text": "Bad weather",
+          "points": 9,
+          "rank": 4,
+          "alternatives": ["weather", "bad weather", "rain", "snow"]
+        },
+        {
+          "text": "Public transport delay",
+          "points": 6,
+          "rank": 5,
+          "alternatives": ["bus", "train", "subway", "public transport", "transportation"]
+        },
+        {
+          "text": "Sick child",
+          "points": 2,
+          "rank": 6,
+          "alternatives": ["sick child", "child", "family emergency", "kids"]
+        }
+      ]
+    },
+    {
+      "id": "ff005",
+      "text": "Name something people collect",
+      "survey_question": "We asked 100 people: What do people like to collect?",
+      "answers": [
+        {
+          "text": "Stamps",
+          "points": 30,
+          "rank": 1,
+          "alternatives": ["stamps", "postage stamps"]
+        },
+        {
+          "text": "Coins",
+          "points": 25,
+          "rank": 2,
+          "alternatives": ["coins", "money", "currency"]
+        },
+        {
+          "text": "Baseball cards",
+          "points": 18,
+          "rank": 3,
+          "alternatives": ["baseball cards", "cards", "trading cards", "sports cards"]
+        },
+        {
+          "text": "Books",
+          "points": 12,
+          "rank": 4,
+          "alternatives": ["books", "novels"]
+        },
+        {
+          "text": "Dolls",
+          "points": 10,
+          "rank": 5,
+          "alternatives": ["dolls", "action figures", "toys"]
+        },
+        {
+          "text": "Art",
+          "points": 5,
+          "rank": 6,
+          "alternatives": ["art", "paintings", "artwork"]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "created_by": "demo_admin",
+    "created_at": "2024-01-01T12:00:00Z",
+    "version": "1.0",
+    "language": "en",
+    "estimated_duration": 900,
+    "total_possible_points": 500
+  }
+}

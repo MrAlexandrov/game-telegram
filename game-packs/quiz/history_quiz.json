@@ -1,0 +1,90 @@
+{
+  "game_pack": {
+    "meta": {
+      "title": "История России",
+      "description": "Викторина по истории России",
+      "version": "1.0.0",
+      "author": "Admin",
+      "game_type": "quiz",
+      "created_at": "2024-01-15T10:00:00Z"
+    },
+    "config": {
+      "time_limit": 30,
+      "points_per_question": 10,
+      "shuffle_options": true,
+      "allow_partial_credit": false,
+      "case_sensitive": false
+    },
+    "questions": [
+      {
+        "id": "hist1",
+        "order": 1,
+        "type": "multiple_choice",
+        "content": {
+          "text": "В каком году была основана Москва?",
+          "options": ["1147", "1156", "1162", "1174"]
+        },
+        "correct_answers": ["1147"],
+        "points": 10,
+        "time_limit": 30,
+        "requires_validation": false,
+        "explanation": "Москва была основана в 1147 году князем Юрием Долгоруким."
+      },
+      {
+        "id": "hist2",
+        "order": 2,
+        "type": "multiple_choice",
+        "content": {
+          "text": "Кто был первым царем всея Руси?",
+          "options": ["Иван Грозный", "Петр I", "Иван III", "Василий III"]
+        },
+        "correct_answers": ["Иван Грозный"],
+        "points": 10,
+        "time_limit": 30,
+        "requires_validation": false,
+        "explanation": "Иван IV Грозный был первым официально коронованным царем всея Руси в 1547 году."
+      },
+      {
+        "id": "hist3",
+        "order": 3,
+        "type": "text_input",
+        "content": {
+          "text": "Как называлась столица Российской империи с 1712 по 1918 год?"
+        },
+        "correct_answers": ["Санкт-Петербург", "Петербург", "Петроград"],
+        "points": 15,
+        "time_limit": 45,
+        "requires_validation": false,
+        "explanation": "Санкт-Петербург был столицей Российской империи более 200 лет."
+      },
+      {
+        "id": "hist4",
+        "order": 4,
+        "type": "multiple_choice",
+        "content": {
+          "text": "В каком году произошла Октябрьская революция?",
+          "options": ["1916", "1917", "1918", "1919"]
+        },
+        "correct_answers": ["1917"],
+        "points": 10,
+        "time_limit": 30,
+        "requires_validation": false,
+        "explanation": "Октябрьская революция произошла в октябре 1917 года по старому стилю."
+      },
+      {
+        "id": "hist5",
+        "order": 5,
+        "type": "multiple_choice",
+        "content": {
+          "text": "Сколько лет длилась Великая Отечественная война?",
+          "options": ["3 года", "4 года", "5 лет", "6 лет"]
+        },
+        "correct_answers": ["4 года"],
+        "points": 10,
+        "time_limit": 30,
+        "requires_validation": false,
+        "explanation": "Великая Отечественная война длилась с 22 июня 1941 по 9 мая 1945 года - почти 4 года."
+      }
+    ]
+  }
+}
