@@ -58,10 +58,11 @@ app.add_middleware(
 )
 
 # Include routers
-from .api import games, engine, health, import_export
+from .api import games, health, import_export
+from .api import engine as engine_api
 app.include_router(health.router, prefix="/health", tags=["health"])
 app.include_router(games.router, prefix="/games", tags=["games"])
-app.include_router(engine.router, prefix="/engine", tags=["engine"])
+app.include_router(engine_api.router, prefix="/engine", tags=["engine"])
 app.include_router(import_export.router, prefix="/import", tags=["import"])
 
 # Add Prometheus metrics endpoint
